@@ -1,0 +1,11 @@
+---
+########################################################
+# Mac App Storeアプリのインストール
+########################################################
+- name: Mac App Storeアプリをインストール
+  community.general.mas:
+    id: "{{ mas_apps | default([]) | map(attribute='id') | list }}"
+    state: present
+  tags:
+    - app
+

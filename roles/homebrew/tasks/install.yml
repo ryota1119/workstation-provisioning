@@ -1,0 +1,39 @@
+---
+########################################################
+# Tapリポジトリの追加
+########################################################
+- name: Tapリポジトリを追加
+  community.general.homebrew_tap:
+    name: "{{ brew_taps | default([]) }}"
+    state: present
+  tags:
+    - tap
+
+########################################################
+# Formulaパッケージのインストール
+########################################################
+- name: Formulaパッケージをインストール
+  community.general.homebrew:
+    name: "{{ brew_formula | default([]) }}"
+    state: present
+  tags:
+    - formula
+
+########################################################
+# Caskアプリケーションのインストール
+########################################################
+- name: Caskアプリケーション（通常）をインストール
+  community.general.homebrew_cask:
+    name: "{{ brew_casks_normal | default([]) }}"
+    state: present
+  tags:
+    - cask
+
+- name: Caskアプリケーション（sudo必要）をインストール
+  community.general.homebrew_cask:
+    name: "{{ brew_casks_sudo_required | default([]) }}"
+    state: present
+    accept_external_apps: true
+  tags:
+    - cask
+

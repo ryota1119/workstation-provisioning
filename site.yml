@@ -1,0 +1,63 @@
+---
+########################################################
+# Mac環境構築メインプレイブック
+########################################################
+- name: Mac環境構築
+  hosts: localhost
+  gather_facts: true
+  become: false
+
+  pre_tasks:
+    ########################################################
+    # Homebrewの事前確認
+    ########################################################
+    - name: Homebrewがインストールされているか確認
+      ansible.builtin.stat:
+        path: /opt/homebrew/bin/brew
+      register: brew_stat
+
+    - name: Homebrewがない場合は処理を中断
+      ansible.builtin.fail:
+        msg: "Homebrewがインストールされていません。`make bootstrap` を実行してください。"
+      when: not brew_stat.stat.exists
+
+  ########################################################
+  # 各ロールの実行
+  ########################################################
+  roles:
+    ########################################################
+    # macOS専用role
+    ########################################################
+    - role: homebrew
+      when: ansible_os_family == 'Darwin'
+      tags: [macos, packages, homebrew]
+
+    - role: mas
+      when: ansible_os_family == 'Darwin'
+      tags: [macos, apps, mas]
+
+    ########################################################
+    # Linux用role（将来の拡張用）
+    ########################################################
+    # - role: apt_packages
+    #   when: ansible_os_family == 'Debian'
+    #   tags: [linux, packages, apt]
+
+    ########################################################
+    # OS共通role
+    ########################################################
+    - role: asdf
+      tags: [common, languages, asdf]
+
+    ########################################################
+    # 1Password（dotfiles連携に必要）
+    ########################################################
+    - role: 1password
+      when: ansible_os_family == 'Darwin'
+      tags: [macos, 1password, security]
+
+    ########################################################
+    # dotfiles管理（1Password認証が必要）
+    ########################################################
+    - role: chezmoi
+      tags: [common, dotfiles, chezmoi]

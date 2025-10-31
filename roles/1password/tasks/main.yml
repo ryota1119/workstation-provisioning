@@ -1,0 +1,76 @@
+---
+########################################################
+# 1Passwordアプリのインストール
+########################################################
+- name: 1Passwordアプリをインストール
+  community.general.homebrew_cask:
+    name: 1password
+    state: present
+  tags:
+    - 1password
+    - install
+    - app
+
+########################################################
+# 1Password CLIのインストール
+########################################################
+- name: 1Password CLIをインストール
+  community.general.homebrew:
+    name: 1password-cli
+    state: present
+  tags:
+    - 1password
+    - cli
+    - install
+
+########################################################
+# 認証状態の確認
+########################################################
+- name: 1Password CLIの認証状態を確認
+  ansible.builtin.shell: op account list 2>/dev/null || echo "not_signed_in"
+  register: op_auth_status
+  changed_when: false
+  failed_when: false
+  tags:
+    - 1password
+    - check
+
+- name: 1Passwordへのサインイン状態を表示
+  ansible.builtin.debug:
+    msg: |
+      {% if 'not_signed_in' in op_auth_status.stdout %}
+      ⚠️  1Passwordへのサインインが必要です
+      {% else %}
+      ✅ 1Passwordへのサインイン済み
+      {% endif %}
+  tags:
+    - 1password
+    - check
+
+########################################################
+# 未サインインの場合は処理を中断
+########################################################
+- name: 1Passwordへのサインインが必要な場合は処理を中断
+  ansible.builtin.fail:
+    msg: |
+      
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      ⚠️  1Passwordへのサインインが必要です
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+      
+      1Passwordアプリとchezmoi連携には認証が必要です。
+      
+      【手順】
+      1. 1Passwordアプリを起動してサインインしてください
+      2. サインイン後、以下のコマンドで確認してください：
+         $ op account list
+      
+      3. 確認できたら、以下のコマンドでplaybookを再実行してください：
+         $ make install
+      
+      ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  when: "'not_signed_in' in op_auth_status.stdout"
+  tags:
+    - 1password
+    - check
+

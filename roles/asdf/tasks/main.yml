@@ -1,0 +1,54 @@
+---
+########################################################
+# asdfのインストール（OS共通）
+########################################################
+- name: asdfをインストール
+  package:
+    name: asdf
+    state: present
+  tags:
+    - asdf
+    - install
+
+########################################################
+# asdfプラグインのインストール
+########################################################
+- name: asdfプラグインを追加
+  ansible.builtin.shell: asdf plugin add {{ item }} || true
+  loop: "{{ asdf_plugins }}"
+  changed_when: false
+  tags:
+    - asdf
+    - install
+    - plugin
+
+########################################################
+# 各言語・ツールのバージョンインストール
+########################################################
+- name: 指定バージョンをインストール
+  ansible.builtin.shell: asdf install {{ item.name }} {{ item.version }} || true
+  loop: "{{ asdf_plugins_versions }}"
+  changed_when: false
+  tags:
+    - asdf
+    - install
+    - version
+
+########################################################
+# バージョンの設定と反映
+########################################################
+- name: ホームディレクトリにバージョンを設定
+  ansible.builtin.shell: asdf set -u {{ item.name }} {{ item.version }}
+  loop: "{{ asdf_plugins_versions }}"
+  changed_when: false
+  tags:
+    - asdf
+    - configure
+    - version
+
+- name: asdf shimsを更新
+  ansible.builtin.shell: asdf reshim
+  changed_when: false
+  tags:
+    - asdf
+    - configure

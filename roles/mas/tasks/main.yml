@@ -1,0 +1,41 @@
+---
+########################################################
+# MAS（Mac App Store CLI）の存在確認
+########################################################
+- name: MASがインストールされているか確認
+  ansible.builtin.stat:
+    path: /opt/homebrew/bin/mas
+  register: mas_stat
+  tags:
+    - mas
+    - setup
+    - install
+    - upgrade
+
+- name: MASが見つからない場合は処理を中断
+  ansible.builtin.fail:
+    msg: "MASがインストールされていません。`make bootstrap` を実行してください。"
+  when: not mas_stat.stat.exists
+  tags:
+    - mas
+    - setup
+    - install
+    - upgrade
+
+########################################################
+# インストール処理
+########################################################
+- name: Mac App Storeアプリのインストール
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - mas
+    - install
+
+########################################################
+# アップグレード処理
+########################################################
+- name: Mac App Storeアプリのアップグレード
+  ansible.builtin.import_tasks: upgrade.yml
+  tags:
+    - mas
+    - upgrade

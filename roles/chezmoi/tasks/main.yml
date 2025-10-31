@@ -1,0 +1,137 @@
+---
+########################################################
+# chezmoiのインストール
+########################################################
+- name: chezmoiインストール
+  package:
+    name: chezmoi
+    state: present
+  tags:
+    - chezmoi
+    - install
+
+########################################################
+# 1Password認証の確認
+########################################################
+- name: 1Password CLIの認証状態を確認
+  ansible.builtin.shell: op account list 2>/dev/null
+  register: op_auth_status
+  changed_when: false
+  failed_when: false
+  tags:
+    - chezmoi
+    - init
+    - apply
+    - update
+
+- name: 1Password未サインイン時は警告
+  ansible.builtin.debug:
+    msg: "⚠️  1Passwordにサインインしていません。dotfilesのシークレット情報が取得できない可能性があります。"
+  when: op_auth_status.rc != 0
+  tags:
+    - chezmoi
+    - init
+    - apply
+    - update
+
+########################################################
+# dotfilesの初期化（初回のみ）
+########################################################
+- name: dotfilesリポジトリの存在確認
+  ansible.builtin.stat:
+    path: ~/.local/share/chezmoi/.git
+  register: chezmoi_repo
+  tags:
+    - chezmoi
+    - init
+
+- name: chezmoiの初期化
+  ansible.builtin.shell: |
+    chezmoi init {{ chezmoi_repo_url }}
+  when: 
+    - not chezmoi_repo.stat.exists
+    - chezmoi_repo_url is defined
+  tags:
+    - chezmoi
+    - init
+
+- name: 初期化が必要な場合は通知
+  ansible.builtin.debug:
+    msg: |
+      ℹ️  chezmoiリポジトリが設定されていません。
+      group_vars/all.yml に chezmoi_repo_url を設定するか、
+      手動で初期化してください：
+      $ chezmoi init https://github.com/username/dotfiles.git
+  when:
+    - not chezmoi_repo.stat.exists
+    - chezmoi_repo_url is not defined
+  tags:
+    - chezmoi
+    - init
+
+########################################################
+# dotfilesの適用
+########################################################
+- name: 変更があるファイルを確認
+  ansible.builtin.shell: chezmoi status
+  register: chezmoi_status
+  changed_when: false
+  failed_when: false
+  when: chezmoi_repo.stat.exists
+  tags:
+    - chezmoi
+    - apply
+
+- name: 適用予定の変更を表示
+  ansible.builtin.debug:
+    msg: |
+      📝 適用予定の変更:
+      {{ chezmoi_status.stdout }}
+  when: 
+    - chezmoi_repo.stat.exists
+    - chezmoi_status.stdout | length > 0
+  tags:
+    - chezmoi
+    - apply
+
+- name: dotfilesを適用
+  ansible.builtin.shell: chezmoi apply --force
+  when: 
+    - chezmoi_repo.stat.exists
+    - chezmoi_status.stdout | length > 0
+  register: chezmoi_apply_result
+  tags:
+    - chezmoi
+    - apply
+
+- name: 適用完了を通知
+  ansible.builtin.debug:
+    msg: "✅ dotfilesの適用が完了しました"
+  when:
+    - chezmoi_repo.stat.exists
+    - chezmoi_status.stdout | length > 0
+  tags:
+    - chezmoi
+    - apply
+
+########################################################
+# dotfilesの更新
+########################################################
+- name: dotfilesを更新（リポジトリから取得して適用）
+  ansible.builtin.shell: chezmoi update --force
+  when: chezmoi_repo.stat.exists
+  register: chezmoi_update_result
+  changed_when: "'Updated' in chezmoi_update_result.stdout or chezmoi_update_result.stdout | length > 0"
+  tags:
+    - chezmoi
+    - update
+
+- name: 更新結果を表示
+  ansible.builtin.debug:
+    msg: "{{ chezmoi_update_result.stdout }}"
+  when:
+    - chezmoi_repo.stat.exists
+    - chezmoi_update_result.stdout | length > 0
+  tags:
+    - chezmoi
+    - update

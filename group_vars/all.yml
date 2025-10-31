@@ -1,0 +1,131 @@
+########################################################
+# homebrew tap packages
+########################################################
+brew_taps:
+  - ariga/tap
+  - aws/tap
+  - damascenorafael/tap
+  - k1low/tap
+  - minio/stable
+  - shivammathur/php
+  - symfony-cli/tap
+  - xcodesorg/made
+
+########################################################
+# homebrew formula packages
+########################################################
+brew_formula:
+  - act
+  - asdf
+  - lazygit
+  - tig
+  - aws-elasticbeanstalk
+  - awscli
+  - neovim
+  - zsh
+  - zsh-autosuggestions
+  - zsh-completions
+  - fish
+  - tmux
+  - direnv
+  - ripgrep
+  - fd
+  - fzf
+  - tree
+  - age
+  - colordiff
+  - coreutils
+  - curl
+  - wget
+  - jq
+  - nkf
+  - telnet
+  - unar
+  - mas
+  - httpie
+  - openapi-generator
+
+########################################################
+# homebrew cask upgrade settings
+########################################################
+# --greedyオプションの使用（自動更新機能を持つアプリも含めてアップグレード）
+# true: Google Chrome, VSCodeなど自動更新アプリも含める（推奨）
+# false: 自動更新機能を持つアプリは除外
+cask_upgrade_greedy: true
+
+########################################################
+# homebrew cask packages
+########################################################
+# 通常のCask: 自動アップグレード対象
+# sudo必要なCask: 初回インストールのみ自動、アップグレードは手動
+brew_casks_normal:
+  - 1password
+  - 1password-cli
+  - alfred
+  - alt-tab
+  - arc
+  - chatgpt
+  - firefox
+  - gcloud-cli
+  - google-chrome
+  - iterm2
+  - karabiner-elements
+  - keyboardcleantool
+  - monitorcontrol
+  - notion
+  - postman
+  - slack
+  - thebrowsercompany-dia
+  - vrew
+  - cursor
+  - logi-options+
+  - chatgpt-atlas
+
+brew_casks_sudo_required:
+  - docker-desktop
+  - zoom
+
+########################################################
+# mas packages
+########################################################
+mas_apps:
+  - { name: "EasyRes", id: 688211836 }
+  - { name: "Toggl Track", id: 1291898086 }
+  - { name: "Velja", id: 1607635845 }
+
+########################################################
+# asdf packages
+########################################################
+asdf_plugins:
+  - golang
+  - mysql
+  - nodejs
+  - php
+  - pnpm
+  - python
+  - ruby
+  - terraform
+  - terragrunt
+  - yarn
+
+asdf_plugins_versions:
+  - { name: "golang", version: "latest" }
+  - { name: "mysql", version: "latest" }
+  - { name: "nodejs", version: "latest" }
+  - { name: "php", version: "latest" }
+  - { name: "pnpm", version: "latest" }
+  - { name: "python", version: "latest" }
+  - { name: "ruby", version: "latest" }
+  - { name: "terraform", version: "latest" }
+  - { name: "terragrunt", version: "latest" }
+  - { name: "yarn", version: "latest" }
+
+########################################################
+# chezmoi packages
+########################################################
+# dotfilesリポジトリのURL
+# HTTPSまたはSSH形式で指定可能
+# 例: https://github.com/username/dotfiles.git
+# 例: git@github.com:username/dotfiles.git
+# 未設定の場合は手動で初期化が必要
+# chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
