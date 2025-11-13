@@ -3,6 +3,15 @@
 # Mac Provisioning Bootstrap Script
 ########################################################
 # このスクリプトはAnsibleプレイブック実行のための基本環境をセットアップします。
+#
+# 前提条件:
+# - Homebrewが手動でインストール済みであること
+#
+# このスクリプトがインストールするもの:
+# - asdf (Homebrew経由)
+# - Python (asdf経由)
+# - Ansible (pip経由)
+# - Ansible Collections
 ########################################################
 set -euo pipefail
 
@@ -26,36 +35,37 @@ while true; do
 done 2>/dev/null &
 
 ########################################################
-# Homebrewのインストール
+# Homebrewの確認
 ########################################################
-install_homebrew() {
-  if command -v brew >/dev/null 2>&1; then
-    echo "✅ Homebrewは既にインストール済みです。"
-    return 0
-  fi
-
-  echo "📦 Homebrewをインストールしています..."
-  NONINTERACTIVE=1 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-  # アーキテクチャに応じた設定
+check_homebrew() {
+  # Homebrewのパスを確実に設定
   local brew_prefix
+  # macOS前提: Homebrewのパスをアーキテクチャ（Apple Silicon/Intel）で分岐
+  if [[ "$(uname)" == "Darwin" ]]; then
   if [[ "$(uname -m)" == "arm64" ]]; then
     brew_prefix="/opt/homebrew"
   else
     brew_prefix="/usr/local"
+    fi
+  else
+    echo "❌ このスクリプトはmacOS専用です。" >&2
+    exit 1
   fi
 
-  # 現在のシェルに環境変数を設定
+  # 現在のシェルに環境変数を設定（まだ設定されていない場合）
+  if ! command -v brew >/dev/null 2>&1; then
+    if [ -f "${brew_prefix}/bin/brew" ]; then
   eval "$(${brew_prefix}/bin/brew shellenv)"
-
-  # .zprofileに追加（まだなければ）
-  if ! grep -q 'brew shellenv' "${HOME}/.zprofile" 2>/dev/null; then
-    echo "" >>"${HOME}/.zprofile"
-    echo "# Homebrew" >>"${HOME}/.zprofile"
-    echo 'eval "$('${brew_prefix}'/bin/brew shellenv)"' >>"${HOME}/.zprofile"
+    else
+      echo "❌ Homebrewがインストールされていません。"
+      echo "   手動でインストールしてください:"
+      echo "   /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+      echo "   eval \"\$(/opt/homebrew/bin/brew shellenv)\"  # Apple Silicon Macの場合"
+      exit 1
+    fi
   fi
 
-  echo "✅ Homebrewのインストールが完了しました。"
+  echo "✅ Homebrewが確認できました ($(brew --version | head -n1))。"
 }
 
 ########################################################
@@ -173,7 +183,7 @@ install_ansible_collections() {
 ########################################################
 # メイン処理
 ########################################################
-install_homebrew
+check_homebrew
 install_xcode_command_line_tools
 install_asdf
 install_python
@@ -187,6 +197,12 @@ echo ""
 echo "=========================================="
 echo "  ブートストラップが完了しました！ 🎉"
 echo "=========================================="
+echo ""
+echo "インストール済み:"
+echo "  ✅ asdf"
+echo "  ✅ Python (asdf経由)"
+echo "  ✅ Ansible"
+echo "  ✅ Ansible Collections"
 echo ""
 echo "次のステップ:"
 echo "  1. ターミナルを再起動するか、以下を実行: source ~/.zprofile"

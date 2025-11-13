@@ -19,10 +19,10 @@
     - formula
 
 - name: Formulaパッケージをアップグレード
-  when: outdated_formulas.stdout_lines | length > 0
   community.general.homebrew:
     upgrade_all: true
     update_homebrew: false
+  when: outdated_formulas.stdout_lines | length > 0
   tags:
     - formula
 
@@ -38,33 +38,14 @@
   tags:
     - cask
 
-- name: 更新可能な通常Caskのみを抽出
+- name: 更新可能なCaskを分類
   ansible.builtin.set_fact:
-    outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_normal) | list }}"
+    outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_normal | default([])) | list }}"
+    outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_sudo_required | default([])) | list }}"
   tags:
     - cask
 
-- name: 更新可能な通常Caskを表示
-  ansible.builtin.debug:
-    msg: "📦 自動アップグレード対象 ({{ outdated_casks_normal | length }}個): {{ outdated_casks_normal | join(', ') }}"
-  when: outdated_casks_normal | length > 0
-  tags:
-    - cask
-
-- name: 更新可能なsudo必要Caskを抽出
-  ansible.builtin.set_fact:
-    outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_sudo_required) | list }}"
-  tags:
-    - cask
-
-- name: 更新可能なsudo必要Caskを表示
-  ansible.builtin.debug:
-    msg: "⚠️  手動アップグレード推奨 ({{ outdated_casks_sudo | length }}個): {{ outdated_casks_sudo | join(', ') }}"
-  when: outdated_casks_sudo | length > 0
-  tags:
-    - cask
-
-- name: Caskアプリケーション（通常）をアップグレード
+- name: 更新可能な通常Caskをアップグレード
   when: outdated_casks_normal | length > 0
   ansible.builtin.command: "{{ brew_bin }}/brew upgrade --cask {{ item }} {{ '--greedy' if cask_upgrade_greedy | default(true) else '' }}"
   loop: "{{ outdated_casks_normal }}"
@@ -76,26 +57,55 @@
   tags:
     - cask
 
+- name: アップグレード成功したCaskを通知
+  ansible.builtin.debug:
+    msg: |
+      ✅ 以下のCaskはアップグレードに成功しました:
+      {%- for result in cask_upgrade_result.results %}
+      {%- if result.rc == 0 %}
+      - {{ result.item }}
+      {%- endif %}
+      {%- endfor %}
+  when:
+    - outdated_casks_normal | length > 0
+    - cask_upgrade_result.results | selectattr('rc', 'eq', 0) | list | length > 0
+  tags:
+    - cask
+
 - name: アップグレード失敗したCaskを通知
   ansible.builtin.debug:
     msg: |
       ❌ 以下のCaskはアップグレードに失敗しました（手動での確認が必要です）:
-      {% for result in cask_upgrade_result.results %}
-      {% if result.rc != 0 %}
+      {%- for result in cask_upgrade_result.results %}
+      {%- if result.rc != 0 %}
       - {{ result.item }}: {{ result.stderr | default('詳細不明') | regex_replace('\n', ' ') | truncate(100) }}
-      {% endif %}
-      {% endfor %}
+      {%- endif %}
+      {%- endfor %}
   when:
     - outdated_casks_normal | length > 0
     - cask_upgrade_result.results | selectattr('rc', 'ne', 0) | list | length > 0
   tags:
     - cask
 
-- name: sudo権限が必要なCaskの更新通知（詳細）
-  ansible.builtin.debug:
-    msg: "💡 手動アップグレードが必要: brew upgrade --cask {{ item }}"
-  loop: "{{ outdated_casks_sudo }}"
-  when: outdated_casks_sudo | length > 0
+########################################################
+# Caskアプリケーション（sudo必要）の手動アップグレード指示
+########################################################
+- name: sudo必要Caskの手動アップグレード指示を表示
+  debug:
+    msg: |
+      ============================================================
+      以下のCaskアプリケーションは、rootパスワードが必要なため
+      自動アップグレードから除外されています。
+      手動でアップグレードしてください。
+      ============================================================
+
+      アップグレード対象 ({{ outdated_casks_sudo | length }}個): {{ outdated_casks_sudo | join(', ') }}
+
+      手動アップグレードコマンド:
+      {% for item in outdated_casks_sudo %}
+      brew upgrade --cask {{ item }}
+      {% endfor %}
+  when:
+    - outdated_casks_sudo | length > 0
   tags:
     - cask
-

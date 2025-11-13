@@ -15,6 +15,7 @@ brew_taps:
 # homebrew formula packages
 ########################################################
 brew_formula:
+  - 1password-cli
   - act
   - asdf
   - lazygit
@@ -44,6 +45,9 @@ brew_formula:
   - mas
   - httpie
   - openapi-generator
+  - ghq
+  - gh
+  - eza
 
 ########################################################
 # homebrew cask upgrade settings
@@ -59,8 +63,6 @@ cask_upgrade_greedy: true
 # 通常のCask: 自動アップグレード対象
 # sudo必要なCask: 初回インストールのみ自動、アップグレードは手動
 brew_casks_normal:
-  - 1password
-  - 1password-cli
   - alfred
   - alt-tab
   - arc
@@ -69,8 +71,6 @@ brew_casks_normal:
   - gcloud-cli
   - google-chrome
   - iterm2
-  - karabiner-elements
-  - keyboardcleantool
   - monitorcontrol
   - notion
   - postman
@@ -78,12 +78,14 @@ brew_casks_normal:
   - thebrowsercompany-dia
   - vrew
   - cursor
-  - logi-options+
   - chatgpt-atlas
+  - jordanbaird-ice
 
 brew_casks_sudo_required:
   - docker-desktop
   - zoom
+  - keyboardcleantool
+  - logi-options+
 
 ########################################################
 # mas packages
@@ -92,6 +94,7 @@ mas_apps:
   - { name: "EasyRes", id: 688211836 }
   - { name: "Toggl Track", id: 1291898086 }
   - { name: "Velja", id: 1607635845 }
+  - { name: "LINE", id: 539883307 }
 
 ########################################################
 # asdf packages
@@ -119,7 +122,6 @@ asdf_plugins_versions:
   - { name: "terraform", version: "latest" }
   - { name: "terragrunt", version: "latest" }
   - { name: "yarn", version: "latest" }
-
 ########################################################
 # chezmoi packages
 ########################################################

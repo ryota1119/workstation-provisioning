@@ -7,7 +7,7 @@ macOS環境のセットアップと管理を自動化するAnsibleプロジェ�
 - **自動化されたセットアップ**: 新規macOS環境の初期設定を自動化
 - **スマートなアップグレード**: sudo権限が必要なアプリを自動分離
 - **Homebrew統合**: Formula、Cask、MASアプリを一元管理
-- **1Password連携**: CLIの自動インストールと認証確認
+- **1Password連携**: SSH認証エージェントとして1Passwordを使用
 - **dotfiles管理**: chezmoiでdotfilesを自動展開
 - **Ansible**: 冪等性を保った設定管理
 - **開発環境管理**: asdfで複数言語のバージョン管理
@@ -18,53 +18,87 @@ macOS環境のセットアップと管理を自動化するAnsibleプロジェ�
 - macOS 10.15以降
 - 管理者権限
 - インターネット接続
+- 1Passwordアプリ（手動インストール済み）
+- Homebrew（手動インストール済み）
+- Git（Homebrewでインストール済み）
 
 ## 🛠️ セットアップ
 
-### 1. リポジトリのクローン
+### 1. 1Passwordのインストールとログイン
+
+1Passwordアプリを手動でインストールし、ログインしておいてください。
+
+App Storeからインストールするか、[公式サイト](https://downloads.1password.com/mac/1Password.zip)からダウンロード
+
+### 2. SSH認証エージェントを1Passwordに変更
+
+1PasswordのSSH認証エージェントを使用するように設定します。
+
+1Password → 設定 → 開発者 → 「sshエージェントを使用」にチェックを入れる
+
+以下の環境変数を設定
 
 ```bash
-git clone <repository-url>
-cd mac-provisioning
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 ```
 
-### 2. 初期セットアップ
+この設定を永続化するには、`~/.zshrc` または `~/.zprofile` に追加してください：
 
 ```bash
-make bootstrap
+echo 'export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock' >> ~/.zshrc
 ```
 
-このコマンドは以下を実行します：
+### 3. Homebrewのインストールとパスの設定
 
+Homebrewを手動でインストールし、パスを通しておきます。
+
+```bash
+# Homebrewのインストール
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+# パスの設定（Apple Silicon Macの場合）
+eval "$(/opt/homebrew/bin/brew shellenv)"
+```
+
+### 4. Gitのインストール
+
+リポジトリをクローンするために、HomebrewでGitをインストールします。
+
+```bash
+brew install git
+```
+
+### 5. リポジトリのクローン
+
+workstation-provisioningリポジトリをクローンします。
+
+```bash
+git clone git@github.com:ryota1119/workstation-provisioning.git
+cd workstation-provisioning
+```
+
+### 6. ブートストラップスクリプトの実行
+
+asdf、Python、Ansibleなどを自動インストールします。
+
+```bash
+make mac-bootstrap
+```
+
+このスクリプトは以下を実行します：
+
+- Homebrewの確認
 - Xcode Command Line Toolsのインストール
-- Homebrewのインストール
+- asdfのインストール（Homebrew経由）
+- Pythonのインストール（asdf経由）
 - Ansibleのインストール
+- Ansibleコレクションのインストール
 
-### 3. Ansibleコレクションのインストール
-
-```bash
-make install-deps
-```
-
-### 4. プロビジョニング
-
-```bash
-make provision
-```
+### 7. プロビジョニング
 
 Ansibleプレイブックを実行して、アプリケーションのインストールと設定を行います。
 
-⚠️ **注意**: 初回実行時は、1Passwordのサインインが必要なため、以下の手順で実行してください：
-
 ```bash
-# 1. 1Passwordまで実行（認証確認で停止）
-make provision
-
-# 2. 1Passwordアプリを起動してサインイン
-# 3. サインイン確認
-op account list
-
-# 4. 再度実行（chezmoi roleが実行される）
 make provision
 ```
 
@@ -108,17 +142,15 @@ mac-provisioning/
 ### 基本コマンド
 
 - `make help` - 利用可能なコマンドの一覧表示
-- `make bootstrap` - 初期セットアップ（Xcode-CLT、Homebrew、Ansible）
+- `make mac-bootstrap` - ブートストラップスクリプトの実行（asdf、Python、Ansibleをインストール）
 - `make install-deps` - Ansibleコレクションのインストール
 - `make provision` - Ansibleでプロビジョニング実行
-- `make all` - bootstrap → install-deps → provision を順次実行
 
 ### 個別ロール実行
 
 - `make homebrew` - Homebrewパッケージのインストール
 - `make mas` - Mac App Storeアプリのインストール
 - `make asdf` - asdfプラグインとバージョンのインストール
-- `make 1password` - 1Passwordアプリ・CLIのインストールと認証確認
 
 ### Chezmoi (dotfiles管理)
 
@@ -200,13 +232,25 @@ chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
 ### 初回セットアップ（新しいMac）
 
 ```bash
-# 1. Xcode CLT、Homebrew、Ansibleをインストール
-make bootstrap
+# 1. 1Passwordをインストールしてログイン
+# 2. SSH認証エージェントを1Passwordに設定
+export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 
-# 2. Ansibleコレクションをインストール
-make install-deps
+# 3. Homebrewをインストールしてパスを通す
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/opt/homebrew/bin/brew shellenv)"  # Apple Silicon Macの場合
 
-# 3. 全てのパッケージをインストール
+# 4. Gitをインストール
+brew install git
+
+# 5. リポジトリをクローン
+git clone git@github.com:ryota1119/workstation-provisioning.git
+cd workstation-provisioning
+
+# 6. ブートストラップスクリプトを実行（asdf、Python、Ansibleをインストール）
+make mac-bootstrap
+
+# 7. 全てのパッケージをインストール
 make provision
 ```
 
@@ -243,9 +287,6 @@ make homebrew
 # asdfプラグインとバージョンのみ更新
 make asdf
 
-# 1Passwordのインストールと認証確認のみ
-make 1password
-
 # dotfilesの展開のみ（1Password認証済みの場合）
 make chezmoi
 ```
@@ -257,19 +298,22 @@ chezmoiは1Passwordと連携してシークレット情報（APIキー、トー�
 #### 初回セットアップ
 
 ```bash
-# 1. 1Passwordのインストールと認証確認
-make 1password
+# 1. 1Passwordアプリをインストールしてログイン（手動で実施済み）
 
-# 認証されていない場合は停止するので、1Passwordアプリでサインイン後：
+# 2. 1Password CLIをインストール（手動）
+brew install --cask 1password
+brew install 1password-cli
+
+# 3. 1Password CLIの認証確認
 op account list  # 確認
 
-# 2. group_vars/all.ymlにdotfilesリポジトリURLを設定
+# 4. group_vars/all.ymlにdotfilesリポジトリURLを設定
 # chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
 
-# 3. chezmoiの初期化（dotfilesリポジトリをクローン）
+# 5. chezmoiの初期化（dotfilesリポジトリをクローン）
 make chezmoi-init
 
-# 4. dotfilesを適用
+# 6. dotfilesを適用
 make chezmoi-apply
 ```
 
@@ -341,8 +385,11 @@ chezmoi apply
 
 ### Homebrewが見つからない場合
 
+Homebrewがインストールされていない場合は、手動でインストールしてください：
+
 ```bash
-make bootstrap
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+eval "$(/opt/homebrew/bin/brew shellenv)"  # Apple Silicon Macの場合
 ```
 
 ### 権限エラーが発生する場合
