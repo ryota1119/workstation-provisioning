@@ -80,6 +80,8 @@ brew_casks_normal:
   - cursor
   - chatgpt-atlas
   - jordanbaird-ice
+  - setapp
+  - rectangle
 
 brew_casks_sudo_required:
   - docker-desktop
@@ -122,6 +124,7 @@ asdf_plugins_versions:
   - { name: "terraform", version: "latest" }
   - { name: "terragrunt", version: "latest" }
   - { name: "yarn", version: "latest" }
+
 ########################################################
 # chezmoi packages
 ########################################################
@@ -129,5 +132,4 @@ asdf_plugins_versions:
 # HTTPSまたはSSH形式で指定可能
 # 例: https://github.com/username/dotfiles.git
 # 例: git@github.com:username/dotfiles.git
-# 未設定の場合は手動で初期化が必要
-# chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
+chezmoi_repo_url: "git@github.com:ryota1119/dotfiles.git"

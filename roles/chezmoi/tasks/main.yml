@@ -26,7 +26,13 @@
 
 - name: 1Password未サインイン時は警告
   ansible.builtin.debug:
-    msg: "⚠️  1Passwordにサインインしていません。dotfilesのシークレット情報が取得できない可能性があります。"
+    msg: |
+      ⚠️  1Passwordにサインインしていません。
+      dotfilesのシークレット情報が取得できないため、chezmoi applyはスキップされます。
+      
+      手動で認証してから実行する場合：
+      $ op signin
+      $ chezmoi apply --force
   when: op_auth_status.rc != 0
   tags:
     - chezmoi
@@ -51,6 +57,8 @@
   when: 
     - not chezmoi_repo.stat.exists
     - chezmoi_repo_url is defined
+  register: chezmoi_init_result
+  changed_when: chezmoi_init_result.rc == 0
   tags:
     - chezmoi
     - init
@@ -72,12 +80,21 @@
 ########################################################
 # dotfilesの適用
 ########################################################
+- name: リポジトリの存在を再確認（初期化後）
+  ansible.builtin.stat:
+    path: ~/.local/share/chezmoi/.git
+  register: chezmoi_repo_after_init
+  tags:
+    - chezmoi
+    - init
+    - apply
+
 - name: 変更があるファイルを確認
   ansible.builtin.shell: chezmoi status
   register: chezmoi_status
   changed_when: false
   failed_when: false
-  when: chezmoi_repo.stat.exists
+  when: chezmoi_repo_after_init.stat.exists
   tags:
     - chezmoi
     - apply
@@ -88,30 +105,74 @@
       📝 適用予定の変更:
       {{ chezmoi_status.stdout }}
   when: 
-    - chezmoi_repo.stat.exists
+    - chezmoi_repo_after_init.stat.exists
+    - chezmoi_status.stdout is defined
     - chezmoi_status.stdout | length > 0
   tags:
     - chezmoi
     - apply
 
-- name: dotfilesを適用
+- name: dotfilesを適用（初期化直後または変更がある場合）
   ansible.builtin.shell: chezmoi apply --force
   when: 
-    - chezmoi_repo.stat.exists
-    - chezmoi_status.stdout | length > 0
+    - chezmoi_repo_after_init.stat.exists
+    - op_auth_status.rc == 0
+    - (chezmoi_init_result is defined and chezmoi_init_result.changed) or (chezmoi_status is defined and chezmoi_status.stdout is defined and chezmoi_status.stdout | length > 0)
   register: chezmoi_apply_result
+  failed_when: false
   tags:
     - chezmoi
+    - init
     - apply
 
-- name: 適用完了を通知
+- name: 1Password未認証によりchezmoi applyをスキップ
   ansible.builtin.debug:
-    msg: "✅ dotfilesの適用が完了しました"
+    msg: |
+      ⏭️  1Password CLIが認証されていないため、chezmoi applyをスキップしました。
+      認証後、手動で実行してください：
+      $ op signin
+      $ chezmoi apply --force
   when:
-    - chezmoi_repo.stat.exists
-    - chezmoi_status.stdout | length > 0
+    - chezmoi_repo_after_init.stat.exists
+    - op_auth_status.rc != 0
+    - (chezmoi_init_result is defined and chezmoi_init_result.changed) or (chezmoi_status is defined and chezmoi_status.stdout is defined and chezmoi_status.stdout | length > 0)
   tags:
     - chezmoi
+    - init
+    - apply
+
+- name: 適用結果を確認
+  ansible.builtin.debug:
+    msg: |
+      ✅ dotfilesの適用が完了しました
+      {{ chezmoi_apply_result.stdout }}
+  when:
+    - chezmoi_repo_after_init.stat.exists
+    - chezmoi_apply_result is defined
+    - chezmoi_apply_result.rc is defined
+    - chezmoi_apply_result.rc == 0
+  tags:
+    - chezmoi
+    - init
+    - apply
+
+- name: 適用エラーを通知
+  ansible.builtin.debug:
+    msg: |
+      ❌ dotfilesの適用中にエラーが発生しました：
+      {{ chezmoi_apply_result.stderr }}
+      
+      1Password CLIの認証が必要な可能性があります：
+      $ op signin
+      $ chezmoi apply --force
+  when:
+    - chezmoi_repo_after_init.stat.exists
+    - chezmoi_apply_result is defined
+    - chezmoi_apply_result.rc is defined
+    - chezmoi_apply_result.rc != 0
+  tags:
+    - chezmoi
+    - init
     - apply
 
 ########################################################
@@ -119,9 +180,12 @@
 ########################################################
 - name: dotfilesを更新（リポジトリから取得して適用）
   ansible.builtin.shell: chezmoi update --force
-  when: chezmoi_repo.stat.exists
+  when: 
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
   register: chezmoi_update_result
   changed_when: "'Updated' in chezmoi_update_result.stdout or chezmoi_update_result.stdout | length > 0"
+  failed_when: false
   tags:
     - chezmoi
     - update
@@ -131,7 +195,23 @@
     msg: "{{ chezmoi_update_result.stdout }}"
   when:
     - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
+    - chezmoi_update_result.stdout is defined
     - chezmoi_update_result.stdout | length > 0
+  tags:
+    - chezmoi
+    - update
+
+- name: 1Password未認証によりchezmoi updateをスキップ
+  ansible.builtin.debug:
+    msg: |
+      ⏭️  1Password CLIが認証されていないため、chezmoi updateをスキップしました。
+      認証後、手動で実行してください：
+      $ op signin
+      $ chezmoi update --force
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc != 0
   tags:
     - chezmoi
     - update
