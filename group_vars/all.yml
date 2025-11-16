@@ -48,6 +48,15 @@ brew_formula:
   - ghq
   - gh
   - eza
+  # Pythonビルドに必要な依存パッケージ（asdf経由でPythonをビルドする際に必要）
+  - bzip2
+  - libffi
+  - openssl
+  - readline
+  - sqlite3
+  - tcl-tk
+  - xz
+  - zlib
 
 ########################################################
 # homebrew cask upgrade settings

@@ -5,6 +5,7 @@
 # このスクリプトはAnsibleプレイブック実行のための基本環境をセットアップします。
 #
 # 前提条件:
+# - macOS (Apple Silicon専用)
 # - Homebrewが手動でインストール済みであること
 #
 # このスクリプトがインストールするもの:
@@ -68,18 +69,13 @@ setup_sudo() {
 # Homebrewの確認
 ########################################################
 check_homebrew() {
-  # macOS前提: Homebrewのパスをアーキテクチャ（Apple Silicon/Intel）で分岐
+  # macOS前提: Apple Silicon専用
   if [[ "$(uname)" != "Darwin" ]]; then
     echo "❌ このスクリプトはmacOS専用です。" >&2
     exit 1
   fi
 
-  local brew_prefix
-  if [[ "$(uname -m)" == "arm64" ]]; then
-    brew_prefix="/opt/homebrew"
-  else
-    brew_prefix="/usr/local"
-  fi
+  local brew_prefix="/opt/homebrew"
 
   # 現在のシェルに環境変数を設定（まだ設定されていない場合）
   if ! command -v brew >/dev/null 2>&1; then
@@ -89,9 +85,7 @@ check_homebrew() {
       echo "❌ Homebrewがインストールされていません。"
       echo "   手動でインストールしてください:"
       echo "   /bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
-      if [[ "${brew_prefix}" == "/opt/homebrew" ]]; then
-        echo "   eval \"\$(/opt/homebrew/bin/brew shellenv)\"  # Apple Silicon Macの場合"
-      fi
+      echo "   eval \"\$(/opt/homebrew/bin/brew shellenv)\""
       exit 1
     fi
   fi
@@ -135,7 +129,7 @@ install_asdf() {
 install_python() {
   # Pythonのビルドに必要な依存パッケージをHomebrew経由でインストール
   echo "📦 Pythonのビルドに必要な依存パッケージをインストールしています..."
-  brew install openssl readline sqlite3 xz zlib tcl-tk
+  brew install openssl readline sqlite3 xz zlib tcl-tk bzip2 libffi
 
   # asdfのpythonプラグインが存在するか確認
   if asdf plugin list 2>/dev/null | grep -q "^python$"; then
@@ -150,6 +144,10 @@ install_python() {
     echo "✅ Python ${PYTHON_VERSION} (asdf) は既にインストール済みです。"
   else
     echo "📦 Python ${PYTHON_VERSION}をasdf経由でインストールしています..."
+    # Apple Silicon環境でのビルドを確実にするため環境変数を設定
+    export CPPFLAGS="-I/opt/homebrew/include"
+    export LDFLAGS="-L/opt/homebrew/lib"
+    export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig"
     asdf install python ${PYTHON_VERSION}
     echo "✅ Pythonのインストールが完了しました。"
   fi
@@ -242,7 +240,7 @@ setup_environment_variables() {
   local asdf_brew_prefix
   local asdf_init_script
 
-  # asdfの初期化スクリプトのパスを取得
+  # asdfの初期化スクリプトのパスを取得（Apple Silicon専用）
   if command -v brew >/dev/null 2>&1; then
     asdf_brew_prefix=$(brew --prefix asdf 2>/dev/null || echo "/opt/homebrew/opt/asdf")
     asdf_init_script="${asdf_brew_prefix}/libexec/asdf.sh"
@@ -287,7 +285,7 @@ setup_environment_variables() {
 
   echo "✅ 環境変数の設定が完了しました。"
   echo "   次回のターミナル起動時から有効になります。"
-  
+
   # 現在のシェルセッションにも環境変数を設定（スクリプト実行中のみ有効）
   if [ -f "${asdf_init_script}" ]; then
     # shellcheck source=/dev/null
@@ -297,7 +295,7 @@ setup_environment_variables() {
     ensure_asdf_in_path
   fi
   export ANSIBLE_PYTHON_INTERPRETER="${HOME}/.asdf/shims/python3"
-  
+
   echo "   注意: スクリプト終了後も継続するには、以下を実行してください:"
   echo "   source ${shell_config}"
 }
