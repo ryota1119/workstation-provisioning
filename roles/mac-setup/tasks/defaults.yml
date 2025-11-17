@@ -1,0 +1,240 @@
+---
+########################################################
+# macOSシステム設定（defaultsコマンドを使用）
+########################################################
+
+########################################################
+# Finder設定
+########################################################
+- name: Finderで隠しファイルを表示
+  ansible.builtin.command:
+    cmd: defaults write com.apple.finder AppleShowAllFiles -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - finder
+
+- name: Finderで拡張子を表示
+  ansible.builtin.command:
+    cmd: defaults write NSGlobalDomain AppleShowAllExtensions -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - finder
+
+- name: Finderでパスバーを表示
+  ansible.builtin.command:
+    cmd: defaults write com.apple.finder ShowPathbar -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - finder
+
+- name: Finderでステータスバーを表示
+  ansible.builtin.command:
+    cmd: defaults write com.apple.finder ShowStatusBar -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - finder
+
+- name: Finderで新しいウィンドウをホームフォルダで開く
+  ansible.builtin.command:
+    cmd: defaults write com.apple.finder NewWindowTarget -string "PfHm"
+  tags:
+    - macos
+    - setup
+    - defaults
+    - finder
+
+- name: Finderを再起動
+  ansible.builtin.command:
+    cmd: killall Finder
+  tags:
+    - macos
+    - setup
+    - defaults
+    - finder
+
+########################################################
+# Dock設定
+########################################################
+- name: Dockを自動的に非表示にする
+  ansible.builtin.command:
+    cmd: defaults write com.apple.dock autohide -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - dock
+
+- name: Dockのサイズを設定
+  ansible.builtin.command:
+    cmd: defaults write com.apple.dock tilesize -int 36
+  tags:
+    - macos
+    - setup
+    - defaults
+    - dock
+
+- name: Dockのアニメーション時間を短縮
+  ansible.builtin.command:
+    cmd: defaults write com.apple.dock autohide-time-modifier -float 0.5
+  tags:
+    - macos
+    - setup
+    - defaults
+    - dock
+
+- name: Dockを再起動
+  ansible.builtin.command:
+    cmd: killall Dock
+  tags:
+    - macos
+    - setup
+    - defaults
+    - dock
+
+########################################################
+# キーボード設定
+########################################################
+- name: キーリピート速度を設定
+  ansible.builtin.command:
+    cmd: defaults write NSGlobalDomain KeyRepeat -int 2
+  tags:
+    - macos
+    - setup
+    - defaults
+    - keyboard
+
+- name: キーリピート開始までの時間を設定
+  ansible.builtin.command:
+    cmd: defaults write NSGlobalDomain InitialKeyRepeat -int 15
+  tags:
+    - macos
+    - setup
+    - defaults
+    - keyboard
+
+########################################################
+# トラックパッド設定
+########################################################
+- name: トラックパッドでタップでクリックを有効化
+  ansible.builtin.command:
+    cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - trackpad
+
+- name: トラックパッドで3本指ドラッグを有効化
+  ansible.builtin.command:
+    cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - trackpad
+
+- name: トラックパッドでスクロール方向を自然に
+  ansible.builtin.command:
+    cmd: defaults write NSGlobalDomain com.apple.swipescrolldirection -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - trackpad
+
+########################################################
+# セキュリティ設定
+########################################################
+- name: ファイルをダウンロード後に自動的に開くのを無効化
+  ansible.builtin.command:
+    cmd: defaults write com.apple.LaunchServices LSQuarantine -bool false
+  tags:
+    - macos
+    - setup
+    - defaults
+    - security
+
+# Gatekeeperの無効化はsudoが必要なため、手動で実行してください
+# 実行コマンド: sudo spctl --master-disable
+# - name: Gatekeeperを無効化（開発用）
+#   ansible.builtin.command:
+#     cmd: sudo spctl --master-disable
+#   become: true
+#   tags:
+#     - macos
+#     - setup
+#     - defaults
+#     - security
+
+########################################################
+# その他のシステム設定
+########################################################
+########################################################
+# メニューバー時計の設定
+########################################################
+- name: メニューバーの時計で日付と曜日を表示
+  ansible.builtin.command:
+    cmd: defaults write com.apple.menuextra.clock DateFormat -string "EEE MMM d  H:mm:ss"
+  tags:
+    - macos
+    - setup
+    - defaults
+    - system
+    - clock
+
+- name: メニューバーの時計で秒を表示
+  ansible.builtin.command:
+    cmd: defaults write com.apple.menuextra.clock ShowSeconds -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - system
+    - clock
+
+- name: メニューバーの時計で時刻内の":"を点滅させる
+  ansible.builtin.command:
+    cmd: defaults write com.apple.menuextra.clock FlashDateSeparators -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - system
+    - clock
+
+- name: メニューバーの時計をデジタル表示に設定
+  ansible.builtin.command:
+    cmd: defaults write com.apple.menuextra.clock IsAnalog -bool false
+  tags:
+    - macos
+    - setup
+    - defaults
+    - system
+    - clock
+
+- name: バッテリーのパーセンテージを表示
+  ansible.builtin.command:
+    cmd: defaults write com.apple.menuextra.battery ShowPercent -bool true
+  tags:
+    - macos
+    - setup
+    - defaults
+    - system
+
+- name: システム設定を再読み込み
+  ansible.builtin.command:
+    cmd: killall SystemUIServer
+  tags:
+    - macos
+    - setup
+    - defaults
+    - system
+

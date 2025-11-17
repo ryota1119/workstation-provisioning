@@ -22,6 +22,10 @@
       when: ansible_os_family == 'Darwin'
       tags: [macos, apps, mas]
 
+    - role: mac-setup
+      when: ansible_os_family == 'Darwin'
+      tags: [macos, setup, defaults]
+
     ########################################################
     # OS共通role
     ########################################################
