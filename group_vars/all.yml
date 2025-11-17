@@ -47,8 +47,8 @@ brew_formula:
   - openapi-generator
   - ghq
   - gh
-  - eza
   # Pythonビルドに必要な依存パッケージ（asdf経由でPythonをビルドする際に必要）
+  - eza
   - bzip2
   - libffi
   - openssl
@@ -89,7 +89,6 @@ brew_casks_normal:
   - cursor
   - chatgpt-atlas
   - jordanbaird-ice
-  - setapp
   - rectangle
 
 brew_casks_sudo_required:
