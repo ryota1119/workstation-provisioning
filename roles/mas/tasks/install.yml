@@ -11,14 +11,9 @@
     label: "{{ item.name }} ({{ item.id }})"
   failed_when: false
   register: mas_install_result
-  tags:
-    - app
 
 - name: インストール失敗したアプリを報告
   ansible.builtin.debug:
     msg: "{{ item.item.name }} (ID: {{ item.item.id }}) のインストールに失敗しました。App Storeにログインしているか、アプリIDが正しいか確認してください。"
   loop: "{{ mas_install_result.results | default([]) }}"
   when: item.failed | default(false)
-  tags:
-    - app
-

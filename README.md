@@ -105,7 +105,7 @@ make provision
 ## 📁 プロジェクト構造
 
 ```plaintext
-mac-provisioning/
+workstation-provisioning/
 ├── ansible.cfg              # Ansible設定
 ├── site.yml                 # メインプレイブック
 ├── inventory.ini            # インベントリファイル
@@ -124,17 +124,20 @@ mac-provisioning/
 │   │       ├── main.yml        # エントリーポイント
 │   │       ├── install.yml     # インストール処理
 │   │       └── upgrade.yml     # アップグレード処理
-│   ├── 1password/          # 1Password管理ロール（macOS専用）
+│   ├── mac-setting/        # macOSシステム設定ロール（macOS専用）
 │   │   └── tasks/
-│   │       └── main.yml        # インストールと認証確認
+│   │       ├── main.yml        # エントリーポイント
+│   │       └── defaults.yml    # システム設定
 │   ├── asdf/               # asdf言語バージョン管理ロール（OS共通）
 │   │   └── tasks/
 │   │       └── main.yml
 │   └── chezmoi/            # dotfiles管理ロール（OS共通）
 │       └── tasks/
-│           └── main.yml
+│           ├── main.yml        # エントリーポイント
+│           ├── init.yml        # 初期化処理
+│           └── apply.yml       # 更新処理（リポジトリから取得して適用）
 └── scripts/
-    └── bootstrap.sh         # 初期セットアップスクリプト
+    └── mac-bootstrap.sh     # 初期セットアップスクリプト
 ```
 
 ## 🎯 利用可能なコマンド
@@ -151,20 +154,14 @@ mac-provisioning/
 - `make homebrew` - Homebrewパッケージのインストール
 - `make mas` - Mac App Storeアプリのインストール
 - `make asdf` - asdfプラグインとバージョンのインストール
-
-### Chezmoi (dotfiles管理)
-
-- `make chezmoi-init` - chezmoiの初期化（dotfilesリポジトリをクローン）
-- `make chezmoi-apply` - dotfilesを適用（変更を反映）
-- `make chezmoi-update` - dotfilesを更新（リポジトリから取得して適用）
+- `make chezmoi` - chezmoiのセットアップ（初期化 + 更新）
+- `make mac-setting` - macOSシステム設定の適用
 
 ### アップグレードコマンド
 
 - `make upgrade` - **日常的に使用（推奨）**: Homebrew + Mac App Storeの全アップグレード
 - `make upgrade-homebrew` - Homebrewパッケージのみアップグレード
 - `make upgrade-mas` - Mac App Storeアプリのみアップグレード
-- `make upgrade-formula` - Homebrew Formulaのみアップグレード
-- `make upgrade-cask` - Homebrew Cask（通常）のみアップグレード
 
 ### その他
 
@@ -287,8 +284,11 @@ make homebrew
 # asdfプラグインとバージョンのみ更新
 make asdf
 
-# dotfilesの展開のみ（1Password認証済みの場合）
+# chezmoiのセットアップ（初期化 + 更新）
 make chezmoi
+
+# macOSシステム設定のみ適用
+make mac-setting
 ```
 
 ### 1Passwordとchezmoiの連携
@@ -310,21 +310,18 @@ op account list  # 確認
 # 4. group_vars/all.ymlにdotfilesリポジトリURLを設定
 # chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
 
-# 5. chezmoiの初期化（dotfilesリポジトリをクローン）
-make chezmoi-init
-
-# 6. dotfilesを適用
-make chezmoi-apply
+# 5. chezmoiのセットアップ（初期化 + 更新）
+make chezmoi
 ```
 
 #### 日常的な使い方
 
 ```bash
-# dotfilesの変更を取得して適用
-make chezmoi-update
+# dotfilesの変更を取得して適用（リモートリポジトリから最新を取得）
+ansible-playbook site.yml -i inventory.ini --tags apply,chezmoi
 
-# ローカルの変更のみ適用（リポジトリは更新しない）
-make chezmoi-apply
+# または、provisionタグで実行（初期化も含む）
+make provision
 ```
 
 ## 📝 chezmoiによるdotfiles管理
@@ -341,14 +338,28 @@ GitHubなどにdotfilesリポジトリを作成し、`group_vars/all.yml`にURL�
 chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
 ```
 
-#### 2. 初期化と適用
+#### 2. タグによる実行制御
+
+chezmoiロールは以下のタグで制御できます：
+
+- **`provision`タグ**: 初期化 + 更新（初回セットアップ時）
+  - chezmoiのインストール
+  - 1Password認証の確認
+  - リポジトリの初期化（`init.yml`）
+  - リモートから最新を取得して適用（`apply.yml`）
+
+- **`apply`タグ**: 更新のみ（既に初期化済みの場合）
+  - 1Password認証の確認
+  - リモートから最新を取得して適用（`apply.yml`）
+
+#### 3. 実行方法
 
 ```bash
-# chezmoiをインストールして初期化
-make chezmoi-init
+# 初回セットアップ（初期化 + 更新）
+make provision  # または make chezmoi
 
-# dotfilesを適用
-make chezmoi-apply
+# 既に初期化済みの場合（更新のみ）
+ansible-playbook site.yml -i inventory.ini --tags apply,chezmoi
 ```
 
 ### 1Passwordとの連携例
@@ -376,9 +387,12 @@ chezmoi diff
 # 特定ファイルの適用
 chezmoi apply ~/.zshrc
 
+# リモートから最新を取得して適用
+chezmoi update --force
+
 # 手動での初期化（Ansible経由でない場合）
 chezmoi init https://github.com/yourusername/dotfiles.git
-chezmoi apply
+chezmoi update --force
 ```
 
 ## 🔍 トラブルシューティング
@@ -410,10 +424,10 @@ op account list
 chezmoi status
 
 # 詳細なログで実行
-chezmoi apply -v
+chezmoi update -v
 
-# 手動で適用（デバッグ用）
-chezmoi apply --force
+# 手動で更新（デバッグ用）
+chezmoi update --force
 ```
 
 ### 1Passwordのシークレットが取得できない場合

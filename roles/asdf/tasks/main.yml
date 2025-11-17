@@ -7,8 +7,8 @@
     name: asdf
     state: present
   tags:
+    - provision
     - asdf
-    - install
 
 ########################################################
 # asdfプラグインのインストール
@@ -18,9 +18,8 @@
   loop: "{{ asdf_plugins }}"
   changed_when: false
   tags:
+    - provision
     - asdf
-    - install
-    - plugin
 
 ########################################################
 # 各言語・ツールのバージョンインストール
@@ -30,9 +29,8 @@
   loop: "{{ asdf_plugins_versions }}"
   changed_when: false
   tags:
+    - provision
     - asdf
-    - install
-    - version
 
 ########################################################
 # バージョンの設定と反映
@@ -42,13 +40,12 @@
   loop: "{{ asdf_plugins_versions }}"
   changed_when: false
   tags:
+    - provision
     - asdf
-    - configure
-    - version
 
 - name: asdf shimsを更新
   ansible.builtin.shell: asdf reshim
   changed_when: false
   tags:
+    - provision
     - asdf
-    - configure

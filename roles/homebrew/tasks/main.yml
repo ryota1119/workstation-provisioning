@@ -7,29 +7,26 @@
     path: /opt/homebrew/bin/brew
   register: brew_stat
   tags:
-    - homebrew
-    - setup
-    - install
+    - provision
     - upgrade
+    - homebrew
 
 - name: Homebrewが見つからない場合は処理を中断
   ansible.builtin.fail:
     msg: "Homebrewがインストールされていません。`make bootstrap` を実行してください。"
   when: not brew_stat.stat.exists
   tags:
-    - homebrew
-    - setup
-    - install
+    - provision
     - upgrade
+    - homebrew
 
 - name: Homebrewのパスを変数に設定
   ansible.builtin.set_fact:
     brew_bin: /opt/homebrew/bin
   tags:
-    - homebrew
-    - setup
-    - install
+    - provision
     - upgrade
+    - homebrew
 
 ########################################################
 # Homebrewの更新
@@ -38,9 +35,9 @@
   community.general.homebrew:
     update_homebrew: true
   tags:
-    - homebrew
-    - update
+    - provision
     - upgrade
+    - homebrew
 
 ########################################################
 # インストール処理
@@ -48,8 +45,8 @@
 - name: Homebrewパッケージのインストール
   ansible.builtin.import_tasks: install.yml
   tags:
+    - provision
     - homebrew
-    - install
 
 ########################################################
 # アップグレード処理
@@ -57,5 +54,5 @@
 - name: Homebrewパッケージのアップグレード
   ansible.builtin.import_tasks: upgrade.yml
   tags:
-    - homebrew
     - upgrade
+    - homebrew

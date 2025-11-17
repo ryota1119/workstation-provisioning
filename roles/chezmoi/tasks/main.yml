@@ -7,8 +7,8 @@
     name: chezmoi
     state: present
   tags:
+    - provision
     - chezmoi
-    - install
 
 ########################################################
 # 1Password認証の確認
@@ -19,199 +19,40 @@
   changed_when: false
   failed_when: false
   tags:
-    - chezmoi
-    - init
+    - provision
     - apply
-    - update
+    - chezmoi
 
 - name: 1Password未サインイン時は警告
   ansible.builtin.debug:
     msg: |
       ⚠️  1Passwordにサインインしていません。
-      dotfilesのシークレット情報が取得できないため、chezmoi applyはスキップされます。
-      
+      dotfilesのシークレット情報が取得できないため、chezmoi updateはスキップされます。
+
       手動で認証してから実行する場合：
       $ op signin
-      $ chezmoi apply --force
+      $ chezmoi update --force
   when: op_auth_status.rc != 0
   tags:
-    - chezmoi
-    - init
+    - provision
     - apply
-    - update
+    - chezmoi
 
 ########################################################
-# dotfilesの初期化（初回のみ）
+# 初期化処理
 ########################################################
-- name: dotfilesリポジトリの存在確認
-  ansible.builtin.stat:
-    path: ~/.local/share/chezmoi/.git
-  register: chezmoi_repo
+- name: dotfilesの初期化
+  ansible.builtin.import_tasks: init.yml
   tags:
+    - provision
     - chezmoi
-    - init
-
-- name: chezmoiの初期化
-  ansible.builtin.shell: |
-    chezmoi init {{ chezmoi_repo_url }}
-  when: 
-    - not chezmoi_repo.stat.exists
-    - chezmoi_repo_url is defined
-  register: chezmoi_init_result
-  changed_when: chezmoi_init_result.rc == 0
-  tags:
-    - chezmoi
-    - init
-
-- name: 初期化が必要な場合は通知
-  ansible.builtin.debug:
-    msg: |
-      ℹ️  chezmoiリポジトリが設定されていません。
-      group_vars/all.yml に chezmoi_repo_url を設定するか、
-      手動で初期化してください：
-      $ chezmoi init https://github.com/username/dotfiles.git
-  when:
-    - not chezmoi_repo.stat.exists
-    - chezmoi_repo_url is not defined
-  tags:
-    - chezmoi
-    - init
 
 ########################################################
-# dotfilesの適用
+# 更新処理（リポジトリから取得して適用）
 ########################################################
-- name: リポジトリの存在を再確認（初期化後）
-  ansible.builtin.stat:
-    path: ~/.local/share/chezmoi/.git
-  register: chezmoi_repo_after_init
+- name: dotfilesの更新
+  ansible.builtin.import_tasks: apply.yml
   tags:
-    - chezmoi
-    - init
+    - provision
     - apply
-
-- name: 変更があるファイルを確認
-  ansible.builtin.shell: chezmoi status
-  register: chezmoi_status
-  changed_when: false
-  failed_when: false
-  when: chezmoi_repo_after_init.stat.exists
-  tags:
     - chezmoi
-    - apply
-
-- name: 適用予定の変更を表示
-  ansible.builtin.debug:
-    msg: |
-      📝 適用予定の変更:
-      {{ chezmoi_status.stdout }}
-  when: 
-    - chezmoi_repo_after_init.stat.exists
-    - chezmoi_status.stdout is defined
-    - chezmoi_status.stdout | length > 0
-  tags:
-    - chezmoi
-    - apply
-
-- name: dotfilesを適用（初期化直後または変更がある場合）
-  ansible.builtin.shell: chezmoi apply --force
-  when: 
-    - chezmoi_repo_after_init.stat.exists
-    - op_auth_status.rc == 0
-    - (chezmoi_init_result is defined and chezmoi_init_result.changed) or (chezmoi_status is defined and chezmoi_status.stdout is defined and chezmoi_status.stdout | length > 0)
-  register: chezmoi_apply_result
-  failed_when: false
-  tags:
-    - chezmoi
-    - init
-    - apply
-
-- name: 1Password未認証によりchezmoi applyをスキップ
-  ansible.builtin.debug:
-    msg: |
-      ⏭️  1Password CLIが認証されていないため、chezmoi applyをスキップしました。
-      認証後、手動で実行してください：
-      $ op signin
-      $ chezmoi apply --force
-  when:
-    - chezmoi_repo_after_init.stat.exists
-    - op_auth_status.rc != 0
-    - (chezmoi_init_result is defined and chezmoi_init_result.changed) or (chezmoi_status is defined and chezmoi_status.stdout is defined and chezmoi_status.stdout | length > 0)
-  tags:
-    - chezmoi
-    - init
-    - apply
-
-- name: 適用結果を確認
-  ansible.builtin.debug:
-    msg: |
-      ✅ dotfilesの適用が完了しました
-      {{ chezmoi_apply_result.stdout }}
-  when:
-    - chezmoi_repo_after_init.stat.exists
-    - chezmoi_apply_result is defined
-    - chezmoi_apply_result.rc is defined
-    - chezmoi_apply_result.rc == 0
-  tags:
-    - chezmoi
-    - init
-    - apply
-
-- name: 適用エラーを通知
-  ansible.builtin.debug:
-    msg: |
-      ❌ dotfilesの適用中にエラーが発生しました：
-      {{ chezmoi_apply_result.stderr }}
-      
-      1Password CLIの認証が必要な可能性があります：
-      $ op signin
-      $ chezmoi apply --force
-  when:
-    - chezmoi_repo_after_init.stat.exists
-    - chezmoi_apply_result is defined
-    - chezmoi_apply_result.rc is defined
-    - chezmoi_apply_result.rc != 0
-  tags:
-    - chezmoi
-    - init
-    - apply
-
-########################################################
-# dotfilesの更新
-########################################################
-- name: dotfilesを更新（リポジトリから取得して適用）
-  ansible.builtin.shell: chezmoi update --force
-  when: 
-    - chezmoi_repo.stat.exists
-    - op_auth_status.rc == 0
-  register: chezmoi_update_result
-  changed_when: "'Updated' in chezmoi_update_result.stdout or chezmoi_update_result.stdout | length > 0"
-  failed_when: false
-  tags:
-    - chezmoi
-    - update
-
-- name: 更新結果を表示
-  ansible.builtin.debug:
-    msg: "{{ chezmoi_update_result.stdout }}"
-  when:
-    - chezmoi_repo.stat.exists
-    - op_auth_status.rc == 0
-    - chezmoi_update_result.stdout is defined
-    - chezmoi_update_result.stdout | length > 0
-  tags:
-    - chezmoi
-    - update
-
-- name: 1Password未認証によりchezmoi updateをスキップ
-  ansible.builtin.debug:
-    msg: |
-      ⏭️  1Password CLIが認証されていないため、chezmoi updateをスキップしました。
-      認証後、手動で実行してください：
-      $ op signin
-      $ chezmoi update --force
-  when:
-    - chezmoi_repo.stat.exists
-    - op_auth_status.rc != 0
-  tags:
-    - chezmoi
-    - update

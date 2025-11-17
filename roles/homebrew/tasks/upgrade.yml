@@ -8,23 +8,17 @@
   register: outdated_formulas
   changed_when: false
   failed_when: false
-  tags:
-    - formula
 
 - name: 更新可能なFormulaを表示
   ansible.builtin.debug:
     msg: "📦 アップグレード対象のFormula ({{ outdated_formulas.stdout_lines | length }}個): {{ outdated_formulas.stdout_lines | join(', ') }}"
   when: outdated_formulas.stdout_lines | length > 0
-  tags:
-    - formula
 
 - name: Formulaパッケージをアップグレード
   community.general.homebrew:
     upgrade_all: true
     update_homebrew: false
   when: outdated_formulas.stdout_lines | length > 0
-  tags:
-    - formula
 
 ########################################################
 # Caskアプリケーションのアップグレード
@@ -35,15 +29,11 @@
   register: outdated_casks_all
   changed_when: false
   failed_when: false
-  tags:
-    - cask
 
 - name: 更新可能なCaskを分類
   ansible.builtin.set_fact:
     outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_normal | default([])) | list }}"
     outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_sudo_required | default([])) | list }}"
-  tags:
-    - cask
 
 - name: 更新可能な通常Caskをアップグレード
   when: outdated_casks_normal | length > 0
@@ -54,8 +44,6 @@
   failed_when: false
   loop_control:
     label: "{{ item }}"
-  tags:
-    - cask
 
 - name: アップグレード成功したCaskを通知
   ansible.builtin.debug:
@@ -69,8 +57,6 @@
   when:
     - outdated_casks_normal | length > 0
     - cask_upgrade_result.results | selectattr('rc', 'eq', 0) | list | length > 0
-  tags:
-    - cask
 
 - name: アップグレード失敗したCaskを通知
   ansible.builtin.debug:
@@ -84,8 +70,6 @@
   when:
     - outdated_casks_normal | length > 0
     - cask_upgrade_result.results | selectattr('rc', 'ne', 0) | list | length > 0
-  tags:
-    - cask
 
 ########################################################
 # Caskアプリケーション（sudo必要）の手動アップグレード指示
@@ -107,5 +91,3 @@
       {% endfor %}
   when:
     - outdated_casks_sudo | length > 0
-  tags:
-    - cask

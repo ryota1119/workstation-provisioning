@@ -8,21 +8,14 @@
   register: outdated_mas_apps
   changed_when: false
   failed_when: false
-  tags:
-    - app
 
 - name: 更新可能なアプリを表示
   ansible.builtin.debug:
     msg: "📦 アップグレード対象のMac App Storeアプリ ({{ outdated_mas_apps.stdout_lines | length }}個):\n{{ outdated_mas_apps.stdout }}"
   when: outdated_mas_apps.stdout_lines | length > 0
-  tags:
-    - app
 
 - name: Mac App Storeアプリをアップグレード
   community.general.mas:
     upgrade_all: true
     state: present
   when: outdated_mas_apps.stdout_lines | length > 0
-  tags:
-    - app
-
