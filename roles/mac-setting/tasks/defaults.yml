@@ -9,44 +9,26 @@
 - name: Finderで隠しファイルを表示
   ansible.builtin.command:
     cmd: defaults write com.apple.finder AppleShowAllFiles -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: Finderで拡張子を表示
   ansible.builtin.command:
     cmd: defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: Finderでパスバーを表示
   ansible.builtin.command:
     cmd: defaults write com.apple.finder ShowPathbar -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: Finderでステータスバーを表示
   ansible.builtin.command:
     cmd: defaults write com.apple.finder ShowStatusBar -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: Finderで新しいウィンドウをホームフォルダで開く
   ansible.builtin.command:
     cmd: defaults write com.apple.finder NewWindowTarget -string "PfHm"
-  tags:
-    - provision
-    - mac-setting
 
 - name: Finderを再起動
   ansible.builtin.command:
     cmd: killall Finder
-  tags:
-    - provision
-    - mac-setting
 
 ########################################################
 # Dock設定
@@ -54,30 +36,18 @@
 - name: Dockを自動的に非表示にする
   ansible.builtin.command:
     cmd: defaults write com.apple.dock autohide -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: Dockのサイズを設定
   ansible.builtin.command:
     cmd: defaults write com.apple.dock tilesize -int 36
-  tags:
-    - provision
-    - mac-setting
 
 - name: Dockのアニメーション時間を短縮
   ansible.builtin.command:
     cmd: defaults write com.apple.dock autohide-time-modifier -float 0.5
-  tags:
-    - provision
-    - mac-setting
 
 - name: Dockを再起動
   ansible.builtin.command:
     cmd: killall Dock
-  tags:
-    - provision
-    - mac-setting
 
 ########################################################
 # キーボード設定
@@ -85,16 +55,10 @@
 - name: キーリピート速度を設定
   ansible.builtin.command:
     cmd: defaults write NSGlobalDomain KeyRepeat -int 2
-  tags:
-    - provision
-    - mac-setting
 
 - name: キーリピート開始までの時間を設定
   ansible.builtin.command:
     cmd: defaults write NSGlobalDomain InitialKeyRepeat -int 15
-  tags:
-    - provision
-    - mac-setting
 
 ########################################################
 # トラックパッド設定
@@ -102,23 +66,14 @@
 - name: トラックパッドでタップでクリックを有効化
   ansible.builtin.command:
     cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: トラックパッドで3本指ドラッグを有効化
   ansible.builtin.command:
     cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: トラックパッドでスクロール方向を自然に
   ansible.builtin.command:
     cmd: defaults write NSGlobalDomain com.apple.swipescrolldirection -bool true
-  tags:
-    - provision
-    - mac-setting
 
 ########################################################
 # セキュリティ設定
@@ -126,9 +81,6 @@
 - name: ファイルをダウンロード後に自動的に開くのを無効化
   ansible.builtin.command:
     cmd: defaults write com.apple.LaunchServices LSQuarantine -bool false
-  tags:
-    - provision
-    - mac-setting
 
 # Gatekeeperの無効化はsudoが必要なため、手動で実行してください
 # 実行コマンド: sudo spctl --master-disable
@@ -149,41 +101,23 @@
 - name: メニューバーの時計で日付と曜日を表示
   ansible.builtin.command:
     cmd: defaults write com.apple.menuextra.clock DateFormat -string "EEE MMM d  H:mm:ss"
-  tags:
-    - provision
-    - mac-setting
 
 - name: メニューバーの時計で秒を表示
   ansible.builtin.command:
     cmd: defaults write com.apple.menuextra.clock ShowSeconds -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: メニューバーの時計で時刻内の":"を点滅させる
   ansible.builtin.command:
     cmd: defaults write com.apple.menuextra.clock FlashDateSeparators -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: メニューバーの時計をデジタル表示に設定
   ansible.builtin.command:
     cmd: defaults write com.apple.menuextra.clock IsAnalog -bool false
-  tags:
-    - provision
-    - mac-setting
 
 - name: バッテリーのパーセンテージを表示
   ansible.builtin.command:
     cmd: defaults write com.apple.menuextra.battery ShowPercent -bool true
-  tags:
-    - provision
-    - mac-setting
 
 - name: システム設定を再読み込み
   ansible.builtin.command:
     cmd: killall SystemUIServer
-  tags:
-    - provision
-    - mac-setting

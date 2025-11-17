@@ -45,27 +45,27 @@ provision:
 .PHONY: homebrew
 homebrew:
 	@echo "Installing Homebrew packages..."
-	@ansible-playbook site.yml -i inventory.ini --tags "provision,homebrew"
+	@ansible-playbook site.yml -i inventory.ini --tags "install,homebrew"
 
 .PHONY: mas
 mas:
 	@echo "Installing Mac App Store apps..."
-	@ansible-playbook site.yml -i inventory.ini --tags "provision,mas"
+	@ansible-playbook site.yml -i inventory.ini --tags "install,mas"
 
 .PHONY: asdf
 asdf:
 	@echo "Installing asdf packages..."
-	@ansible-playbook site.yml -i inventory.ini --tags "provision,asdf"
+	@ansible-playbook site.yml -i inventory.ini --tags asdf
 
 .PHONY: chezmoi
 chezmoi:
 	@echo "Setting up chezmoi..."
-	@ansible-playbook site.yml -i inventory.ini --tags "provision,chezmoi"
+	@ansible-playbook site.yml -i inventory.ini --tags chezmoi
 
 .PHONY: mac-setting
 mac-setting:
-	@echo "Applying macOS settings..."
-	@ansible-playbook site.yml -i inventory.ini --tags "provision,mac-setting"
+	@echo "Applying mac settings..."
+	@ansible-playbook site.yml -i inventory.ini --tags mac-setting
 
 .PHONY: doctor
 doctor:

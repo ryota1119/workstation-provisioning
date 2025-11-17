@@ -20,8 +20,8 @@
   failed_when: false
   tags:
     - provision
-    - apply
     - chezmoi
+    - apply
 
 - name: 1Password未サインイン時は警告
   ansible.builtin.debug:
@@ -35,8 +35,8 @@
   when: op_auth_status.rc != 0
   tags:
     - provision
-    - apply
     - chezmoi
+    - apply
 
 ########################################################
 # 初期化処理
@@ -54,5 +54,5 @@
   ansible.builtin.import_tasks: apply.yml
   tags:
     - provision
-    - apply
     - chezmoi
+    - apply

@@ -74,7 +74,6 @@ cask_upgrade_greedy: true
 brew_casks_normal:
   - alfred
   - alt-tab
-  - arc
   - chatgpt
   - firefox
   - gcloud-cli
@@ -85,11 +84,12 @@ brew_casks_normal:
   - postman
   - slack
   - thebrowsercompany-dia
-  - vrew
   - cursor
   - chatgpt-atlas
-  - jordanbaird-ice
+  # M5チップに対応するまでコメントアウト
+  # - jordanbaird-ice
   - rectangle
+  - setapp
 
 brew_casks_sudo_required:
   - docker-desktop

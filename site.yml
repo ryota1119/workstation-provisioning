@@ -16,29 +16,17 @@
     ########################################################
     - role: homebrew
       when: ansible_os_family == 'Darwin'
-      tags:
-        - homebrew
-
     - role: mas
       when: ansible_os_family == 'Darwin'
-      tags:
-        - mas
-
     - role: mac-setting
       when: ansible_os_family == 'Darwin'
-      tags:
-        - mac-setting
 
     ########################################################
     # OS共通role
     ########################################################
     - role: asdf
-      tags:
-        - asdf
 
     ########################################################
     # dotfiles管理（1Password認証が必要）
     ########################################################
     - role: chezmoi
-      tags:
-        - chezmoi
