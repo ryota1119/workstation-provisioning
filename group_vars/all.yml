@@ -2,14 +2,7 @@
 # homebrew tap packages
 ########################################################
 brew_taps:
-  - ariga/tap
-  - aws/tap
-  - damascenorafael/tap
-  - k1low/tap
-  - minio/stable
-  - shivammathur/php
-  - symfony-cli/tap
-  - xcodesorg/made
+  - homebrew/cask-fonts
 
 ########################################################
 # homebrew formula packages
@@ -86,6 +79,7 @@ brew_casks_normal:
   - thebrowsercompany-dia
   - cursor
   - chatgpt-atlas
+  - font-fira-code-nerd-font
   # M5チップに対応するまでコメントアウト
   # - jordanbaird-ice
   - rectangle

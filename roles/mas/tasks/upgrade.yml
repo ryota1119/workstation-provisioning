@@ -18,4 +18,6 @@
   community.general.mas:
     upgrade_all: true
     state: present
+  become: true
+  become_method: sudo
   when: outdated_mas_apps.stdout_lines | length > 0

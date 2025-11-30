@@ -78,7 +78,7 @@ all: mac-bootstrap install-deps provision
 .PHONY: upgrade
 upgrade:
 	@echo "Upgrading all packages (Homebrew + Mac App Store)..."
-	@ansible-playbook site.yml -i inventory.ini --tags upgrade
+	@ansible-playbook site.yml -i inventory.ini --tags upgrade --ask-become-pass
 
 .PHONY: upgrade-homebrew
 upgrade-homebrew:
@@ -88,7 +88,7 @@ upgrade-homebrew:
 .PHONY: upgrade-mas
 upgrade-mas:
 	@echo "Upgrading Mac App Store apps..."
-	@ansible-playbook site.yml -i inventory.ini --tags "upgrade,mas"
+	@ansible-playbook site.yml -i inventory.ini --tags "upgrade,mas" --ask-become-pass
 
 .PHONY: clean
 clean:
