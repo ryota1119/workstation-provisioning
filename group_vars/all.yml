@@ -8,7 +8,6 @@ brew_taps:
 # homebrew formula packages
 ########################################################
 brew_formula:
-  - 1password-cli
   - act
   - asdf
   - lazygit
@@ -65,31 +64,34 @@ cask_upgrade_greedy: true
 # 通常のCask: 自動アップグレード対象
 # sudo必要なCask: 初回インストールのみ自動、アップグレードは手動
 brew_casks_normal:
+  - 1password-cli
+  - arc
   - alfred
   - alt-tab
   - chatgpt
+  - cursor
   - firefox
+  - font-fira-code-nerd-font
+  - font-hack-nerd-font
   - gcloud-cli
   - google-chrome
   - iterm2
   - monitorcontrol
+  - nordvpn
   - notion
   - postman
-  - slack
-  - thebrowsercompany-dia
-  - cursor
-  - chatgpt-atlas
-  - font-fira-code-nerd-font
-  # M5チップに対応するまでコメントアウト
-  # - jordanbaird-ice
   - rectangle
   - setapp
+  - slack
+  - thebrowsercompany-dia
+
 
 brew_casks_sudo_required:
   - docker-desktop
-  - zoom
+  - google-drive
   - keyboardcleantool
   - logi-options+
+  - zoom
 
 ########################################################
 # mas packages

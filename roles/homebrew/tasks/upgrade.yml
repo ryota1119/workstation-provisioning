@@ -45,19 +45,6 @@
   loop_control:
     label: "{{ item }}"
 
-- name: アップグレード成功したCaskを通知
-  ansible.builtin.debug:
-    msg: |
-      ✅ 以下のCaskはアップグレードに成功しました:
-      {%- for result in cask_upgrade_result.results %}
-      {%- if result.rc == 0 %}
-      - {{ result.item }}
-      {%- endif %}
-      {%- endfor %}
-  when:
-    - outdated_casks_normal | length > 0
-    - cask_upgrade_result.results | selectattr('rc', 'eq', 0) | list | length > 0
-
 - name: アップグレード失敗したCaskを通知
   ansible.builtin.debug:
     msg: |
