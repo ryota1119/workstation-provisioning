@@ -248,14 +248,8 @@ setup_environment_variables() {
     asdf_init_script="${HOME}/.asdf/asdf.sh"
   fi
 
-  # シェル設定ファイルを決定（zshの場合）
-  if [ -n "${ZSH_VERSION:-}" ]; then
-    shell_config="${HOME}/.zshrc"
-  elif [ -n "${BASH_VERSION:-}" ]; then
-    shell_config="${HOME}/.bashrc"
-  else
-    shell_config="${HOME}/.zshrc"
-  fi
+  # シェル設定ファイルを決定（zshに統一）
+  shell_config="${HOME}/.zshrc"
 
   # 既に設定されているか確認
   if [ -f "${shell_config}" ] && grep -q "asdf環境変数の設定" "${shell_config}" 2>/dev/null; then

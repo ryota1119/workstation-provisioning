@@ -9,15 +9,12 @@
   changed_when: false
   failed_when: false
 
-- name: 更新可能なアプリを表示
-  ansible.builtin.debug:
-    msg: "📦 アップグレード対象のMac App Storeアプリ ({{ outdated_mas_apps.stdout_lines | length }}個):\n{{ outdated_mas_apps.stdout }}"
-  when: outdated_mas_apps.stdout_lines | length > 0
-
 - name: Mac App Storeアプリをアップグレード
-  community.general.mas:
-    upgrade_all: true
-    state: present
+  ansible.builtin.command:
+    cmd: /opt/homebrew/bin/mas install {{ item }}
+  loop: "{{ outdated_mas_apps.stdout_lines }}"
+  loop_control:
+    label: "{{ item }}"
   become: true
   become_method: sudo
   when: outdated_mas_apps.stdout_lines | length > 0

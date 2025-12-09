@@ -14,8 +14,37 @@
 
 - name: MASが見つからない場合は処理を中断
   ansible.builtin.fail:
-    msg: "MASがインストールされていません。`make bootstrap` を実行してください。"
+    msg: "MASがインストールされていません。"
   when: not mas_stat.stat.exists
+  tags:
+    - provision
+    - install
+    - upgrade
+    - mas
+
+########################################################
+# App Storeログイン確認
+########################################################
+- name: App Storeへのログイン状態を確認
+  ansible.builtin.command: /opt/homebrew/bin/mas list
+  register: mas_list_result
+  changed_when: false
+  failed_when: false
+  tags:
+    - provision
+    - install
+    - upgrade
+    - mas
+
+- name: App Store未ログインの警告
+  ansible.builtin.debug:
+    msg: |
+      ⚠️  App Storeにログインしていない可能性があります。
+      masコマンドでログインしてください：
+      $ mas signin your-apple-id@example.com
+      
+      または、App Storeアプリから手動でログインしてください。
+  when: mas_list_result.rc != 0
   tags:
     - provision
     - install
@@ -30,6 +59,7 @@
   tags:
     - provision
     - install
+    - mas
 
 ########################################################
 # アップグレード処理

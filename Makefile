@@ -19,8 +19,6 @@ help:
 	@echo ""
 	@echo "Upgrade Commands:"
 	@echo "  upgrade             - 全パッケージのアップグレード（Homebrew + MAS）"
-	@echo "  upgrade-homebrew    - Homebrewパッケージのみアップグレード"
-	@echo "  upgrade-mas         - Mac App Storeアプリのみアップグレード"
 	@echo ""
 	@echo "Utilities:"
 	@echo "  doctor              - 必須ツールの事前チェック（Homebrew, Ansible等）"
@@ -40,27 +38,27 @@ install-deps:
 .PHONY: provision
 provision:
 	@echo "Running full provisioning..."
-	@ansible-playbook site.yml -i inventory.ini --tags provision
+	@ansible-playbook site.yml -i inventory.ini --tags "provision" -K
 
 .PHONY: homebrew
 homebrew:
 	@echo "Installing Homebrew packages..."
-	@ansible-playbook site.yml -i inventory.ini --tags "install,homebrew"
+	@ansible-playbook site.yml -i inventory.ini --tags "homebrew"
 
 .PHONY: mas
 mas:
 	@echo "Installing Mac App Store apps..."
-	@ansible-playbook site.yml -i inventory.ini --tags "install,mas"
+	@ansible-playbook site.yml -i inventory.ini --tags "mas" -K
 
 .PHONY: asdf
 asdf:
 	@echo "Installing asdf packages..."
-	@ansible-playbook site.yml -i inventory.ini --tags asdf
+	@ansible-playbook site.yml -i inventory.ini --tags "asdf"
 
 .PHONY: chezmoi
 chezmoi:
 	@echo "Setting up chezmoi..."
-	@ansible-playbook site.yml -i inventory.ini --tags chezmoi
+	@ansible-playbook site.yml -i inventory.ini --tags "chezmoi"
 
 .PHONY: mac-setting
 mac-setting:
@@ -73,22 +71,17 @@ doctor:
 	@command -v ansible >/dev/null 2>&1 || echo "⚠️ Ansible未導入（make bootstrap で導入）"
 
 .PHONY: all
-all: mac-bootstrap install-deps provision
+all: 
+	@echo "Running all tasks..."
+	@make mac-bootstrap
+	@source ~/.zshrc
+	@make install-deps
+	@make provision
 
 .PHONY: upgrade
 upgrade:
 	@echo "Upgrading all packages (Homebrew + Mac App Store)..."
 	@ansible-playbook site.yml -i inventory.ini --tags upgrade --ask-become-pass
-
-.PHONY: upgrade-homebrew
-upgrade-homebrew:
-	@echo "Upgrading Homebrew packages..."
-	@ansible-playbook site.yml -i inventory.ini --tags "upgrade,homebrew"
-
-.PHONY: upgrade-mas
-upgrade-mas:
-	@echo "Upgrading Mac App Store apps..."
-	@ansible-playbook site.yml -i inventory.ini --tags "upgrade,mas" --ask-become-pass
 
 .PHONY: clean
 clean:

@@ -46,16 +46,17 @@
 ########################################################
 # インストール処理
 ########################################################
-- name: Homebrewパッケージのインストール
+- name: Homebrewパッケージインストール処理
   ansible.builtin.import_tasks: install.yml
   tags:
     - provision
     - install
+    - homebrew
 
 ########################################################
 # アップグレード処理
 ########################################################
-- name: Homebrewパッケージのアップグレード
+- name: Homebrewパッケージアップグレード処理
   ansible.builtin.import_tasks: upgrade.yml
   tags:
     - upgrade

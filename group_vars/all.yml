@@ -1,12 +1,15 @@
 ########################################################
 # homebrew tap packages
 ########################################################
-brew_taps:
-  - homebrew/cask-fonts
+# 注意: homebrew/cask-fontsは非推奨のため削除
+# フォントはbrew_casks_normalで直接インストール可能
+brew_taps: []
 
 ########################################################
 # homebrew formula packages
 ########################################################
+brew_base_formula:
+
 brew_formula:
   - act
   - asdf
@@ -18,7 +21,6 @@ brew_formula:
   - zsh
   - zsh-autosuggestions
   - zsh-completions
-  - fish
   - tmux
   - direnv
   - ripgrep
@@ -51,14 +53,6 @@ brew_formula:
   - zlib
 
 ########################################################
-# homebrew cask upgrade settings
-########################################################
-# --greedyオプションの使用（自動更新機能を持つアプリも含めてアップグレード）
-# true: Google Chrome, VSCodeなど自動更新アプリも含める（推奨）
-# false: 自動更新機能を持つアプリは除外
-cask_upgrade_greedy: true
-
-########################################################
 # homebrew cask packages
 ########################################################
 # 通常のCask: 自動アップグレード対象
@@ -75,9 +69,9 @@ brew_casks_normal:
   - font-hack-nerd-font
   - gcloud-cli
   - google-chrome
+  - jordanbaird-ice@beta
   - iterm2
   - monitorcontrol
-  - nordvpn
   - notion
   - postman
   - rectangle
@@ -91,16 +85,19 @@ brew_casks_sudo_required:
   - google-drive
   - keyboardcleantool
   - logi-options+
+  - nordvpn
   - zoom
 
 ########################################################
 # mas packages
 ########################################################
 mas_apps:
+  - { name: "1Password for Safari", id: 1569813296 }
   - { name: "EasyRes", id: 688211836 }
   - { name: "Toggl Track", id: 1291898086 }
   - { name: "Velja", id: 1607635845 }
   - { name: "LINE", id: 539883307 }
+
 
 ########################################################
 # asdf packages

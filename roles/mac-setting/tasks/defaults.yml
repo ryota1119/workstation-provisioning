@@ -22,6 +22,14 @@
   ansible.builtin.command:
     cmd: defaults write com.apple.finder ShowStatusBar -bool true
 
+- name: Finderでタイトルバーにフルパスを表示
+  ansible.builtin.command:
+    cmd: defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
+
+- name: Finderで名前で並べ替えを選択時にディレクトリを前に置くように
+  ansible.builtin.command:
+    cmd: defaults write com.apple.finder _FXSortFoldersFirst -bool true
+
 - name: Finderで新しいウィンドウをホームフォルダで開く
   ansible.builtin.command:
     cmd: defaults write com.apple.finder NewWindowTarget -string "PfHm"
@@ -63,17 +71,34 @@
 ########################################################
 # トラックパッド設定
 ########################################################
-- name: トラックパッドでタップでクリックを有効化
+- name: トラックパッドでタップでクリックを有効化（Bluetooth）
   ansible.builtin.command:
     cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
 
-- name: トラックパッドで3本指ドラッグを有効化
+- name: トラックパッドでタップでクリックを有効化（内蔵）
+  ansible.builtin.command:
+    cmd: defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
+
+- name: トラックパッドでタップでクリックを有効化（グローバル）
+  ansible.builtin.command:
+    cmd: defaults -currentHost write -g com.apple.mouse.tapBehavior -int 1
+
+- name: トラックパッドで3本指ドラッグを有効化（Bluetooth）
   ansible.builtin.command:
     cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
+
+- name: トラックパッドで3本指ドラッグを有効化（内蔵）
+  ansible.builtin.command:
+    cmd: defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
 
 - name: トラックパッドでスクロール方向を自然に
   ansible.builtin.command:
     cmd: defaults write NSGlobalDomain com.apple.swipescrolldirection -bool true
+
+- name: トラックパッド設定を再読み込み
+  ansible.builtin.command:
+    cmd: killall cfprefsd
+  ignore_errors: true
 
 ########################################################
 # セキュリティ設定
@@ -82,42 +107,29 @@
   ansible.builtin.command:
     cmd: defaults write com.apple.LaunchServices LSQuarantine -bool false
 
-# Gatekeeperの無効化はsudoが必要なため、手動で実行してください
-# 実行コマンド: sudo spctl --master-disable
-# - name: Gatekeeperを無効化（開発用）
-#   ansible.builtin.command:
-#     cmd: sudo spctl --master-disable
-#   become: true
-#   tags:
-#     - provision
-#     - mac-setting
-
 ########################################################
 # その他のシステム設定
 ########################################################
+
 ########################################################
 # メニューバー時計の設定
 ########################################################
-- name: メニューバーの時計で日付と曜日を表示
+- name: メニューバーの時計をアナログ表示
   ansible.builtin.command:
-    cmd: defaults write com.apple.menuextra.clock DateFormat -string "EEE MMM d  H:mm:ss"
-
-- name: メニューバーの時計で秒を表示
-  ansible.builtin.command:
-    cmd: defaults write com.apple.menuextra.clock ShowSeconds -bool true
-
-- name: メニューバーの時計で時刻内の":"を点滅させる
-  ansible.builtin.command:
-    cmd: defaults write com.apple.menuextra.clock FlashDateSeparators -bool true
-
-- name: メニューバーの時計をデジタル表示に設定
-  ansible.builtin.command:
-    cmd: defaults write com.apple.menuextra.clock IsAnalog -bool false
+    cmd: defaults write com.apple.menuextra.clock IsAnalog -bool true
 
 - name: バッテリーのパーセンテージを表示
   ansible.builtin.command:
-    cmd: defaults write com.apple.menuextra.battery ShowPercent -bool true
+    cmd: defaults write com.apple.menuextra.battery -bool false
 
 - name: システム設定を再読み込み
   ansible.builtin.command:
     cmd: killall SystemUIServer
+
+
+########################################################
+# .DS_Storeファイル
+########################################################
+- name: .DS_Storeファイルを作らせない
+  ansible.builtin.command:
+    cmd: defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE

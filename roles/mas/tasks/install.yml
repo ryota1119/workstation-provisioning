@@ -3,17 +3,18 @@
 # Mac App Storeアプリのインストール
 ########################################################
 - name: Mac App Storeアプリをインストール
-  community.general.mas:
-    id: "{{ item.id }}"
-    state: present
+  ansible.builtin.command:
+    cmd: /opt/homebrew/bin/mas install {{ item.id }}
   loop: "{{ mas_apps | default([]) }}"
   loop_control:
     label: "{{ item.name }} ({{ item.id }})"
-  failed_when: false
+  become: true
+  become_method: sudo
   register: mas_install_result
+  ignore_errors: true
 
 - name: インストール失敗したアプリを報告
   ansible.builtin.debug:
-    msg: "{{ item.item.name }} (ID: {{ item.item.id }}) のインストールに失敗しました。App Storeにログインしているか、アプリIDが正しいか確認してください。"
+    msg: "{{ item.item.name }} (ID: {{ item.item.id }}) のインストールに失敗しました。エラー: {{ item.msg | default('不明なエラー') }}。App Storeにログインしているか、アプリIDが正しいか確認してください。"
   loop: "{{ mas_install_result.results | default([]) }}"
   when: item.failed | default(false)
