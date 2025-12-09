@@ -41,7 +41,7 @@ brew_formula:
   - openapi-generator
   - ghq
   - gh
-  # Pythonビルドに必要な依存パッケージ（asdf経由でPythonをビルドする際に必要）
+  # asdf経由でPythonをビルドする際に必要な依存パッケージ
   - eza
   - bzip2
   - libffi
@@ -51,6 +51,8 @@ brew_formula:
   - tcl-tk
   - xz
   - zlib
+  # asdf経由でyarnをビルドする際に必要な依存パッケージ
+  - gpg
 
 ########################################################
 # homebrew cask packages
@@ -93,7 +95,6 @@ brew_casks_sudo_required:
 ########################################################
 mas_apps:
   - { name: "1Password for Safari", id: 1569813296 }
-  - { name: "EasyRes", id: 688211836 }
   - { name: "Toggl Track", id: 1291898086 }
   - { name: "Velja", id: 1607635845 }
   - { name: "LINE", id: 539883307 }
