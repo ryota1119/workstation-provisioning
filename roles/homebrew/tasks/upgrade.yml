@@ -12,7 +12,7 @@
 - name: Formulaパッケージをアップグレード
   community.general.homebrew:
     name: "{{ item }}"
-    state: present
+    state: latest
   loop: "{{ outdated_formulas.stdout_lines }}"
   loop_control:
     label: "{{ item }}"
