@@ -61,7 +61,6 @@ brew_formula:
 # sudo必要なCask: 初回インストールのみ自動、アップグレードは手動
 brew_casks_normal:
   - 1password-cli
-  - arc
   - alfred
   - alt-tab
   - chatgpt
@@ -81,7 +80,6 @@ brew_casks_normal:
   - slack
   - thebrowsercompany-dia
 
-
 brew_casks_sudo_required:
   - docker-desktop
   - google-drive
@@ -98,7 +96,6 @@ mas_apps:
   - { name: "Toggl Track", id: 1291898086 }
   - { name: "Velja", id: 1607635845 }
   - { name: "LINE", id: 539883307 }
-
 
 ########################################################
 # asdf packages
