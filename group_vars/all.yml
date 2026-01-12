@@ -83,7 +83,6 @@ brew_casks_sudo_required:
   - docker-desktop
   - google-drive
   - keyboardcleantool
-  - logi-options+
   - nordvpn
   - zoom
 
