@@ -1,32 +1,23 @@
 ---
-########################################################
-# miseのインストール（OS共通）
-########################################################
-- name: miseをインストール
-  package:
-    name: mise
-    state: present
+- name: miseセットアップ
   tags:
     - provision
     - mise
+  block:
+    - name: miseをインストール
+      ansible.builtin.package:
+        name: mise
+        state: present
 
-########################################################
-# miseツールのインストール
-########################################################
-- name: 指定バージョンをインストール
-  ansible.builtin.shell: mise use --global {{ item.name }}@{{ item.version }}
-  loop: "{{ mise_tools_versions }}"
-  changed_when: false
-  tags:
-    - provision
-    - mise
+    - name: 指定バージョンをインストール
+      ansible.builtin.shell: "mise use --global {{ item.name }}@{{ item.version }}"
+      loop: "{{ mise_tools_versions | default([]) }}"
+      loop_control:
+        label: "{{ item.name }}@{{ item.version }}"
+      register: mise_install_result
+      changed_when: "'Installing' in mise_install_result.stderr or 'installed' in mise_install_result.stderr"
+      failed_when: false
 
-########################################################
-# miseのreshim実行
-########################################################
-- name: mise shimsを更新
-  ansible.builtin.shell: mise reshim
-  changed_when: false
-  tags:
-    - provision
-    - mise
+    - name: mise shimsを更新
+      ansible.builtin.shell: mise reshim
+      changed_when: false

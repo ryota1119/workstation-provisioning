@@ -1,28 +1,21 @@
 ---
-########################################################
-# Mac App Storeアプリのアップグレード
-########################################################
 - name: 更新可能なMac App Storeアプリを取得
-  ansible.builtin.shell: |
-    /opt/homebrew/bin/mas outdated
+  ansible.builtin.shell: "{{ homebrew_prefix }}/bin/mas outdated"
   register: outdated_mas_apps
   changed_when: false
   failed_when: false
 
 - name: アプリIDを抽出
   ansible.builtin.set_fact:
-    outdated_app_ids: "{{ outdated_app_ids | default([]) + [item | trim | split(' ') | first] }}"
-  loop: "{{ outdated_mas_apps.stdout_lines }}"
-  when: 
-    - outdated_mas_apps.stdout_lines | length > 0
-    - item | trim | length > 0
+    outdated_app_ids: "{{ outdated_mas_apps.stdout_lines | map('trim') | map('split', ' ') | map('first') | list }}"
+  when: outdated_mas_apps.stdout_lines | length > 0
 
 - name: Mac App Storeアプリをアップグレード
-  ansible.builtin.command:
-    cmd: /opt/homebrew/bin/mas install --force {{ item }}
+  ansible.builtin.command: "{{ homebrew_prefix }}/bin/mas install --force {{ item }}"
   loop: "{{ outdated_app_ids | default([]) }}"
   loop_control:
     label: "{{ item }}"
   become: true
   become_method: sudo
   when: outdated_app_ids is defined and outdated_app_ids | length > 0
+  changed_when: true

@@ -1,17 +1,12 @@
-########################################################
-# homebrew tap packages
-########################################################
-# 注意: homebrew/cask-fontsは非推奨のため削除
-# フォントはbrew_casks_normalで直接インストール可能
+---
+# Homebrewインストールパス
+homebrew_prefix: /opt/homebrew
+
+# Tapリポジトリ
 brew_taps: []
 
-########################################################
-# homebrew formula packages
-########################################################
-brew_base_formula:
-
+# Formulaパッケージ
 brew_formula:
-  # 基本パッケージ
   - act
   - mise
   - lazygit
@@ -42,22 +37,21 @@ brew_formula:
   - openapi-generator
   - ghq
   - gh
-  # 依存のためにインストールするパッケージ
+  - eza
+  # 依存パッケージ
   - zlib
   - openssl@3
-  # mise経由でPythonをビルドする際に必要な依存パッケージ
-  - eza
+  # mise経由でPythonをビルドする際に必要
+  - openssl
   - bzip2
   - libffi
-  - openssl
   - readline
   - sqlite3
   - tcl-tk
   - xz
-  - zlib
-  # mise経由でyarnをビルドする際に必要な依存パッケージ
+  # mise経由でyarnをビルドする際に必要
   - gpg
-  # mise経由でphpをビルドする際に必要な依存パッケージ
+  # mise経由でPHPをビルドする際に必要
   - autoconf
   - automake
   - bison
@@ -76,14 +70,7 @@ brew_formula:
   - pkg-config
   - re2c
 
-
-
-
-########################################################
-# homebrew cask packages
-########################################################
-# 通常のCask: 自動アップグレード対象
-# sudo必要なCask: 初回インストールのみ自動、アップグレードは手動
+# Caskアプリケーション（通常）
 brew_casks_normal:
   - 1password-cli
   - alfred
@@ -104,6 +91,7 @@ brew_casks_normal:
   - setapp
   - slack
 
+# Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
   - docker-desktop
   - google-drive
@@ -111,22 +99,18 @@ brew_casks_sudo_required:
   - nordvpn
   - zoom
 
-########################################################
-# mas packages
-########################################################
+# Mac App Storeアプリ
 mas_apps:
   - { name: "1Password for Safari", id: 1569813296 }
   - { name: "Toggl Track", id: 1291898086 }
   - { name: "Velja", id: 1607635845 }
   - { name: "LINE", id: 539883307 }
 
-########################################################
-# mise packages
-########################################################
+# miseツールバージョン
 mise_tools_versions:
-  - { name: "golang", version: "latest" }
+  - { name: "go", version: "latest" }
   - { name: "mysql", version: "latest" }
-  - { name: "nodejs", version: "latest" }
+  - { name: "node", version: "latest" }
   - { name: "php", version: "latest" }
   - { name: "pnpm", version: "latest" }
   - { name: "python", version: "latest" }
@@ -135,11 +119,5 @@ mise_tools_versions:
   - { name: "terragrunt", version: "latest" }
   - { name: "yarn", version: "latest" }
 
-########################################################
-# chezmoi packages
-########################################################
 # dotfilesリポジトリのURL
-# HTTPSまたはSSH形式で指定可能
-# 例: https://github.com/username/dotfiles.git
-# 例: git@github.com:username/dotfiles.git
 chezmoi_repo_url: "git@github.com:ryota1119/dotfiles.git"

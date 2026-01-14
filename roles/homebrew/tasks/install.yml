@@ -1,47 +1,28 @@
 ---
-########################################################
-# Tapリポジトリの追加
-########################################################
 - name: Tapリポジトリを追加
   community.general.homebrew_tap:
     name: "{{ item }}"
     state: present
   loop: "{{ brew_taps | default([]) }}"
+  when: brew_taps is defined and brew_taps | length > 0
   loop_control:
     label: "{{ item }}"
 
-########################################################
-# Formulaパッケージのインストール
-########################################################
 - name: Formulaパッケージをインストール
   community.general.homebrew:
-    name: "{{ item }}"
+    name: "{{ brew_formula }}"
     state: present
-  loop: "{{ brew_formula | default([]) }}"
-  loop_control:
-    label: "{{ item }}"
+  when: brew_formula is defined and brew_formula | length > 0
 
-########################################################
-# Caskアプリケーションのインストール
-########################################################
 - name: Caskアプリケーション（通常）をインストール
   community.general.homebrew_cask:
-    name: "{{ item }}"
+    name: "{{ brew_casks_normal }}"
     state: present
-  loop: "{{ brew_casks_normal | default([]) }}"
-  loop_control:
-    label: "{{ item }}"
+  when: brew_casks_normal is defined and brew_casks_normal | length > 0
 
-########################################################
-# Caskアプリケーション（sudo必要）の手動インストール指示
-########################################################
-- name: Caskアプリケーション（sudo必要）の手動インストールを表示
-  debug:
-    msg: | 
-      以下のCaskアプリケーションは、
-      rootパスワードが必要なため自動インストールから除外されています。
-
-      手動でインストールしてください。
+- name: Caskアプリケーション（sudo必要）の手動インストール案内
+  ansible.builtin.debug:
+    msg: |
+      以下のCaskはrootパスワードが必要なため、手動インストールが必要です：
       brew install --cask {{ brew_casks_sudo_required | join(' ') }}
   when: brew_casks_sudo_required is defined and brew_casks_sudo_required | length > 0
-

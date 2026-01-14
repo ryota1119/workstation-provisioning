@@ -1,13 +1,10 @@
 ---
-########################################################
-# dotfilesの更新（リポジトリから取得して適用）
-########################################################
 - name: dotfilesリポジトリの存在確認
   ansible.builtin.stat:
     path: ~/.local/share/chezmoi/.git
   register: chezmoi_repo
 
-- name: dotfilesを更新（リポジトリから取得して適用）
+- name: dotfilesを更新
   ansible.builtin.shell: chezmoi update --force
   when:
     - chezmoi_repo.stat.exists

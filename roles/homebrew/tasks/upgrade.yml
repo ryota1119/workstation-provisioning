@@ -1,29 +1,18 @@
 ---
-########################################################
-# Formulaパッケージのアップグレード
-########################################################
 - name: 更新可能なFormulaパッケージを取得
-  ansible.builtin.shell: |
-    {{ brew_bin }}/brew outdated --formula --quiet
+  ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew outdated --formula --quiet"
   register: outdated_formulas
   changed_when: false
   failed_when: false
 
 - name: Formulaパッケージをアップグレード
   community.general.homebrew:
-    name: "{{ item }}"
+    name: "{{ outdated_formulas.stdout_lines }}"
     state: latest
-  loop: "{{ outdated_formulas.stdout_lines }}"
-  loop_control:
-    label: "{{ item }}"
   when: outdated_formulas.stdout_lines | length > 0
 
-########################################################
-# Caskパッケージのアップグレード
-########################################################
 - name: 更新可能なCaskパッケージを取得
-  ansible.builtin.shell: |
-    {{ brew_bin }}/brew outdated --cask --greedy --quiet
+  ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew outdated --cask --greedy --quiet"
   register: outdated_casks_all
   changed_when: false
   failed_when: false
@@ -34,22 +23,17 @@
     outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_sudo_required | default([])) | list }}"
   when: outdated_casks_all.stdout_lines | length > 0
 
-- name: 更新可能な通常のCaskパッケージをアップグレード
-  ansible.builtin.command: "{{ brew_bin }}/brew upgrade --cask {{ item }} --greedy"
-  loop: "{{ outdated_casks_normal }}"
+- name: 通常のCaskパッケージをアップグレード
+  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew upgrade --cask {{ item }} --greedy"
+  loop: "{{ outdated_casks_normal | default([]) }}"
   loop_control:
     label: "{{ item }}"
   when: outdated_casks_normal is defined and outdated_casks_normal | length > 0
+  changed_when: true
 
-########################################################
-# Caskパッケージ（sudo必要）の手動アップグレードを表示
-########################################################
-- name: Caskパッケージ（sudo必要）の手動アップグレードを表示
-  debug:
+- name: Cask（sudo必要）の手動アップグレード案内
+  ansible.builtin.debug:
     msg: |
-      以下のCaskパッケージは、rootパスワードが必要なため
-      自動アップグレードから除外されています。
-
-      手動でアップグレードしてください。
+      以下のCaskはrootパスワードが必要なため、手動アップグレードが必要です：
       brew upgrade --cask {{ outdated_casks_sudo | join(' ') }}
   when: outdated_casks_sudo is defined and outdated_casks_sudo | length > 0

@@ -1,15 +1,11 @@
 ---
-########################################################
-# dotfilesの初期化（初回のみ）
-########################################################
 - name: dotfilesリポジトリの存在確認
   ansible.builtin.stat:
     path: ~/.local/share/chezmoi/.git
   register: chezmoi_repo
 
 - name: chezmoiの初期化
-  ansible.builtin.shell: |
-    chezmoi init {{ chezmoi_repo_url }}
+  ansible.builtin.shell: "chezmoi init {{ chezmoi_repo_url }}"
   when:
     - not chezmoi_repo.stat.exists
     - chezmoi_repo_url is defined
@@ -20,8 +16,7 @@
   ansible.builtin.debug:
     msg: |
       ℹ️  chezmoiリポジトリが設定されていません。
-      group_vars/all.yml に chezmoi_repo_url を設定するか、
-      手動で初期化してください：
+      group_vars/all.yml に chezmoi_repo_url を設定するか、手動で初期化してください：
       $ chezmoi init https://github.com/username/dotfiles.git
   when:
     - not chezmoi_repo.stat.exists

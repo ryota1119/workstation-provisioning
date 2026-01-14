@@ -1,55 +1,37 @@
 ---
-########################################################
-# chezmoiのインストール
-########################################################
-- name: chezmoiインストール
-  package:
-    name: chezmoi
-    state: present
+- name: chezmoiセットアップ
   tags:
     - provision
     - chezmoi
+  block:
+    - name: chezmoiをインストール
+      ansible.builtin.package:
+        name: chezmoi
+        state: present
 
-########################################################
-# 1Password認証の確認
-########################################################
-- name: 1Password CLIの認証状態を確認
-  ansible.builtin.shell: op account list 2>/dev/null
-  register: op_auth_status
-  changed_when: false
-  failed_when: false
-  tags:
-    - provision
-    - chezmoi
-    - apply
+    - name: 1Password CLIの認証状態を確認
+      ansible.builtin.shell: op account list 2>/dev/null
+      register: op_auth_status
+      changed_when: false
+      failed_when: false
 
-- name: 1Password未サインイン時は警告
-  ansible.builtin.debug:
-    msg: |
-      ⚠️  1Passwordにサインインしていません。
-      dotfilesのシークレット情報が取得できないため、chezmoi updateはスキップされます。
+    - name: 1Password未サインイン時は警告
+      ansible.builtin.debug:
+        msg: |
+          ⚠️  1Passwordにサインインしていません。
+          dotfilesのシークレット情報が取得できないため、chezmoi updateはスキップされます。
+          
+          手動で認証してから実行する場合：
+          $ op signin
+          $ chezmoi update --force
+      when: op_auth_status.rc != 0
 
-      手動で認証してから実行する場合：
-      $ op signin
-      $ chezmoi update --force
-  when: op_auth_status.rc != 0
-  tags:
-    - provision
-    - chezmoi
-    - apply
-
-########################################################
-# 初期化処理
-########################################################
 - name: dotfilesの初期化
   ansible.builtin.import_tasks: init.yml
   tags:
     - provision
     - chezmoi
 
-########################################################
-# 更新処理（リポジトリから取得して適用）
-########################################################
 - name: dotfilesの更新
   ansible.builtin.import_tasks: apply.yml
   tags:

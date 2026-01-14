@@ -1,135 +1,64 @@
 ---
-########################################################
-# macOSシステム設定（defaultsコマンドを使用）
-########################################################
+- name: macOSシステム設定を適用
+  ansible.builtin.command: "defaults write {{ item.domain }} {{ item.key }} {{ item.type }} {{ item.value }}"
+  loop:
+    # Finder設定
+    - { domain: "com.apple.finder", key: "AppleShowAllFiles", type: "-bool", value: "true" }
+    - { domain: "NSGlobalDomain", key: "AppleShowAllExtensions", type: "-bool", value: "true" }
+    - { domain: "com.apple.finder", key: "ShowPathbar", type: "-bool", value: "true" }
+    - { domain: "com.apple.finder", key: "ShowStatusBar", type: "-bool", value: "true" }
+    - { domain: "com.apple.finder", key: "_FXShowPosixPathInTitle", type: "-bool", value: "true" }
+    - { domain: "com.apple.finder", key: "_FXSortFoldersFirst", type: "-bool", value: "true" }
+    - { domain: "com.apple.finder", key: "NewWindowTarget", type: "-string", value: '"PfHm"' }
+    # Dock設定
+    - { domain: "com.apple.dock", key: "autohide", type: "-bool", value: "true" }
+    - { domain: "com.apple.dock", key: "tilesize", type: "-int", value: "36" }
+    - { domain: "com.apple.dock", key: "autohide-time-modifier", type: "-float", value: "0.5" }
+    # キーボード設定
+    - { domain: "NSGlobalDomain", key: "KeyRepeat", type: "-int", value: "2" }
+    - { domain: "NSGlobalDomain", key: "InitialKeyRepeat", type: "-int", value: "15" }
+    # トラックパッド設定
+    - { domain: "com.apple.driver.AppleBluetoothMultitouch.trackpad", key: "Clicking", type: "-bool", value: "true" }
+    - { domain: "com.apple.AppleMultitouchTrackpad", key: "Clicking", type: "-bool", value: "true" }
+    - { domain: "com.apple.driver.AppleBluetoothMultitouch.trackpad", key: "TrackpadThreeFingerDrag", type: "-bool", value: "true" }
+    - { domain: "com.apple.AppleMultitouchTrackpad", key: "TrackpadThreeFingerDrag", type: "-bool", value: "true" }
+    - { domain: "NSGlobalDomain", key: "com.apple.swipescrolldirection", type: "-bool", value: "true" }
+    # セキュリティ設定
+    - { domain: "com.apple.LaunchServices", key: "LSQuarantine", type: "-bool", value: "false" }
+    # メニューバー設定
+    - { domain: "com.apple.menuextra.clock", key: "IsAnalog", type: "-bool", value: "true" }
+    - { domain: "com.apple.menuextra.battery", key: "ShowPercent", type: "-bool", value: "false" }
+    # .DS_Storeファイル
+    - { domain: "com.apple.desktopservices", key: "DSDontWriteNetworkStores", type: "-bool", value: "true" }
+  loop_control:
+    label: "{{ item.domain }}: {{ item.key }}"
+  changed_when: true
+  notify:
+    - restart_finder
+    - restart_dock
+    - restart_systemuiserver
 
-########################################################
-# Finder設定
-########################################################
-- name: Finderで隠しファイルを表示
-  ansible.builtin.command:
-    cmd: defaults write com.apple.finder AppleShowAllFiles -bool true
-
-- name: Finderで拡張子を表示
-  ansible.builtin.command:
-    cmd: defaults write NSGlobalDomain AppleShowAllExtensions -bool true
-
-- name: Finderでパスバーを表示
-  ansible.builtin.command:
-    cmd: defaults write com.apple.finder ShowPathbar -bool true
-
-- name: Finderでステータスバーを表示
-  ansible.builtin.command:
-    cmd: defaults write com.apple.finder ShowStatusBar -bool true
-
-- name: Finderでタイトルバーにフルパスを表示
-  ansible.builtin.command:
-    cmd: defaults write com.apple.finder _FXShowPosixPathInTitle -bool true
-
-- name: Finderで名前で並べ替えを選択時にディレクトリを前に置くように
-  ansible.builtin.command:
-    cmd: defaults write com.apple.finder _FXSortFoldersFirst -bool true
-
-- name: Finderで新しいウィンドウをホームフォルダで開く
-  ansible.builtin.command:
-    cmd: defaults write com.apple.finder NewWindowTarget -string "PfHm"
+- name: トラックパッドのタップでクリックを有効化（currentHost）
+  ansible.builtin.command: "defaults -currentHost write -g com.apple.mouse.tapBehavior -int 1"
+  changed_when: true
 
 - name: Finderを再起動
-  ansible.builtin.command:
-    cmd: killall Finder
-
-########################################################
-# Dock設定
-########################################################
-- name: Dockを自動的に非表示にする
-  ansible.builtin.command:
-    cmd: defaults write com.apple.dock autohide -bool true
-
-- name: Dockのサイズを設定
-  ansible.builtin.command:
-    cmd: defaults write com.apple.dock tilesize -int 36
-
-- name: Dockのアニメーション時間を短縮
-  ansible.builtin.command:
-    cmd: defaults write com.apple.dock autohide-time-modifier -float 0.5
+  ansible.builtin.command: killall Finder
+  changed_when: false
+  failed_when: false
 
 - name: Dockを再起動
-  ansible.builtin.command:
-    cmd: killall Dock
+  ansible.builtin.command: killall Dock
+  changed_when: false
+  failed_when: false
 
-########################################################
-# キーボード設定
-########################################################
-- name: キーリピート速度を設定
-  ansible.builtin.command:
-    cmd: defaults write NSGlobalDomain KeyRepeat -int 2
+- name: SystemUIServerを再起動
+  ansible.builtin.command: killall SystemUIServer
+  changed_when: false
+  failed_when: false
 
-- name: キーリピート開始までの時間を設定
-  ansible.builtin.command:
-    cmd: defaults write NSGlobalDomain InitialKeyRepeat -int 15
-
-########################################################
-# トラックパッド設定
-########################################################
-- name: トラックパッドでタップでクリックを有効化（Bluetooth）
-  ansible.builtin.command:
-    cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad Clicking -bool true
-
-- name: トラックパッドでタップでクリックを有効化（内蔵）
-  ansible.builtin.command:
-    cmd: defaults write com.apple.AppleMultitouchTrackpad Clicking -bool true
-
-- name: トラックパッドでタップでクリックを有効化（グローバル）
-  ansible.builtin.command:
-    cmd: defaults -currentHost write -g com.apple.mouse.tapBehavior -int 1
-
-- name: トラックパッドで3本指ドラッグを有効化（Bluetooth）
-  ansible.builtin.command:
-    cmd: defaults write com.apple.driver.AppleBluetoothMultitouch.trackpad TrackpadThreeFingerDrag -bool true
-
-- name: トラックパッドで3本指ドラッグを有効化（内蔵）
-  ansible.builtin.command:
-    cmd: defaults write com.apple.AppleMultitouchTrackpad TrackpadThreeFingerDrag -bool true
-
-- name: トラックパッドでスクロール方向を自然に
-  ansible.builtin.command:
-    cmd: defaults write NSGlobalDomain com.apple.swipescrolldirection -bool true
-
-- name: トラックパッド設定を再読み込み
-  ansible.builtin.command:
-    cmd: killall cfprefsd
+- name: cfprefsdを再起動
+  ansible.builtin.command: killall cfprefsd
+  changed_when: false
+  failed_when: false
   ignore_errors: true
-
-########################################################
-# セキュリティ設定
-########################################################
-- name: ファイルをダウンロード後に自動的に開くのを無効化
-  ansible.builtin.command:
-    cmd: defaults write com.apple.LaunchServices LSQuarantine -bool false
-
-########################################################
-# その他のシステム設定
-########################################################
-
-########################################################
-# メニューバー時計の設定
-########################################################
-- name: メニューバーの時計をアナログ表示
-  ansible.builtin.command:
-    cmd: defaults write com.apple.menuextra.clock IsAnalog -bool true
-
-- name: バッテリーのパーセンテージを表示
-  ansible.builtin.command:
-    cmd: defaults write com.apple.menuextra.battery -bool false
-
-- name: システム設定を再読み込み
-  ansible.builtin.command:
-    cmd: killall SystemUIServer
-
-
-########################################################
-# .DS_Storeファイル
-########################################################
-- name: .DS_Storeファイルを作らせない
-  ansible.builtin.command:
-    cmd: defaults write com.apple.desktopservices DSDontWriteNetworkStores -bool TRUE
