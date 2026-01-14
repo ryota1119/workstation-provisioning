@@ -9,8 +9,8 @@
 # - Homebrewが手動でインストール済みであること
 #
 # このスクリプトがインストールするもの:
-# - asdf (Homebrew経由)
-# - Python (asdf経由)
+# - mise (Homebrew経由)
+# - Python (mise経由)
 # - Ansible (pip経由)
 # - Ansible Collections
 ########################################################
@@ -20,16 +20,15 @@ set -euo pipefail
 # 設定
 ########################################################
 readonly PYTHON_VERSION=3.13.7
-readonly ASDF_SHIMS_PATH="$HOME/.asdf/shims"
 
 ########################################################
 # ヘルパー関数
 ########################################################
 
-# asdfのshimをPATHに追加（まだ追加されていない場合）
-ensure_asdf_in_path() {
-  if [[ ":$PATH:" != *":${ASDF_SHIMS_PATH}:"* ]]; then
-    export PATH="${ASDF_SHIMS_PATH}:$PATH"
+# mise環境を有効化
+ensure_mise_in_path() {
+  if command -v mise >/dev/null 2>&1; then
+    eval "$(mise activate bash 2>/dev/null || mise activate zsh 2>/dev/null)" || true
   fi
 }
 
@@ -42,7 +41,9 @@ command_exists_and_works() {
 # デバッグ情報を出力
 print_debug_info() {
   echo "   デバッグ情報:"
-  echo "   - Python: $(which python3) ($(python3 --version 2>&1))"
+  echo "   - which python3: $(which python3)"
+  echo "   - python3 --version: $(python3 --version 2>&1)"
+  echo "   - mise which python3: $(mise which python3 2>/dev/null || echo '見つかりません')"
   echo "   - ansibleコマンド: $(command -v ansible || echo '見つかりません')"
   echo "   - Python実行可能ファイルの場所: $(python3 -c 'import sys; print(sys.executable)' 2>/dev/null || echo '確認できません')"
   echo "   - Python site-packages: $(python3 -c 'import site; print(site.getsitepackages())' 2>/dev/null || echo '確認できません')"
@@ -108,18 +109,18 @@ install_xcode_command_line_tools() {
 }
 
 ########################################################
-# asdfのインストール
+# miseのインストール
 ########################################################
-install_asdf() {
-  if command -v asdf >/dev/null 2>&1; then
-    echo "✅ asdfは既にインストール済みです。"
+install_mise() {
+  if command -v mise >/dev/null 2>&1; then
+    echo "✅ miseは既にインストール済みです。"
   else
-    echo "📦 asdfをインストールしています..."
-    brew install asdf
-    echo "✅ asdfのインストールが完了しました。"
+    echo "📦 miseをインストールしています..."
+    brew install mise
+    echo "✅ miseのインストールが完了しました。"
   fi
 
-  ensure_asdf_in_path
+  ensure_mise_in_path
 }
 
 ########################################################
@@ -131,45 +132,30 @@ install_python() {
   echo "📦 Pythonのビルドに必要な依存パッケージをインストールしています..."
   brew install openssl readline sqlite3 xz zlib tcl-tk bzip2 libffi
 
-  # asdfのpythonプラグインが存在するか確認
-  if asdf plugin list 2>/dev/null | grep -q "^python$"; then
-    echo "✅ asdf pythonプラグインは既にインストール済みです。"
+  # mise経由で指定バージョンがインストールされているか確認
+  if mise list python 2>/dev/null | grep -q "${PYTHON_VERSION}"; then
+    echo "✅ Python ${PYTHON_VERSION} (mise) は既にインストール済みです。"
   else
-    echo "📦 asdf pythonプラグインをインストールしています..."
-    asdf plugin add python
-  fi
-
-  # asdf経由で指定バージョンがインストールされているか確認
-  if asdf list python 2>/dev/null | grep -q "${PYTHON_VERSION}"; then
-    echo "✅ Python ${PYTHON_VERSION} (asdf) は既にインストール済みです。"
-  else
-    echo "📦 Python ${PYTHON_VERSION}をasdf経由でインストールしています..."
+    echo "📦 Python ${PYTHON_VERSION}をmise経由でインストールしています..."
     # Apple Silicon環境でのビルドを確実にするため環境変数を設定
     export CPPFLAGS="-I/opt/homebrew/include"
     export LDFLAGS="-L/opt/homebrew/lib"
     export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig"
-    asdf install python ${PYTHON_VERSION}
+    mise use --global python@${PYTHON_VERSION}
     echo "✅ Pythonのインストールが完了しました。"
   fi
 
-  # ローカルバージョンの設定（asdf経由を確実に使用）
-  echo "📦 Python ${PYTHON_VERSION}をローカルバージョンに設定しています..."
-  asdf set python ${PYTHON_VERSION}
-
-  ensure_asdf_in_path
-
-  # asdfのshimを更新
-  asdf reshim python
+  ensure_mise_in_path
 
   # pipを最新版にアップグレード
   echo "📦 pipをアップグレードしています..."
-  python3 -m ensurepip --upgrade 2>/dev/null || true
-  python3 -m pip install --upgrade pip
-  echo "✅ pipの準備が完了しました (Python: $(python3 --version))。"
+  mise exec python@${PYTHON_VERSION} -- python3 -m ensurepip --upgrade 2>/dev/null || true
+  mise exec python@${PYTHON_VERSION} -- python3 -m pip install --upgrade pip
+  echo "✅ pipの準備が完了しました (Python: $(mise exec python@${PYTHON_VERSION} -- python3 --version))。"
 }
 
 ########################################################
-# Ansibleのインストール（asdf Python環境にインストール）
+# Ansibleのインストール（mise Python環境にインストール）
 ########################################################
 install_ansible() {
   # Ansibleが正常に動作するか確認
@@ -185,19 +171,18 @@ install_ansible() {
     echo "⚠️  Ansibleが見つかりましたが、正常に動作しません。再インストールします..."
   fi
 
-  ensure_asdf_in_path
+  ensure_mise_in_path
 
   # 既存のAnsibleが~/.localにインストールされている場合は削除
-  if python3 -m pip show ansible 2>/dev/null | grep -q "Location:.*\.local"; then
+  if mise exec python@${PYTHON_VERSION} -- python3 -m pip show ansible 2>/dev/null | grep -q "Location:.*\.local"; then
     echo "📦 既存のAnsibleを~/.localから削除しています..."
-    python3 -m pip uninstall -y ansible ansible-core 2>/dev/null || true
+    mise exec python@${PYTHON_VERSION} -- python3 -m pip uninstall -y ansible ansible-core 2>/dev/null || true
   fi
 
   echo "📦 Ansibleをインストールしています..."
-  # PIP_USER=falseを設定して、asdf Python環境に直接インストール
+  # PIP_USER=falseを設定して、mise Python環境に直接インストール
   # --force-reinstallで既存のパッケージを再インストール
-  PIP_USER=false python3 -m pip install --force-reinstall ansible
-  asdf reshim
+  PIP_USER=false mise exec python@${PYTHON_VERSION} -- python3 -m pip install --force-reinstall ansible
 
   # インストール確認（少し待ってから確認）
   sleep 1
@@ -237,22 +222,12 @@ install_ansible_collections() {
 ########################################################
 setup_environment_variables() {
   local shell_config
-  local asdf_brew_prefix
-  local asdf_init_script
-
-  # asdfの初期化スクリプトのパスを取得（Apple Silicon専用）
-  if command -v brew >/dev/null 2>&1; then
-    asdf_brew_prefix=$(brew --prefix asdf 2>/dev/null || echo "/opt/homebrew/opt/asdf")
-    asdf_init_script="${asdf_brew_prefix}/libexec/asdf.sh"
-  else
-    asdf_init_script="${HOME}/.asdf/asdf.sh"
-  fi
 
   # シェル設定ファイルを決定（zshに統一）
   shell_config="${HOME}/.zshrc"
 
   # 既に設定されているか確認
-  if [ -f "${shell_config}" ] && grep -q "asdf環境変数の設定" "${shell_config}" 2>/dev/null; then
+  if [ -f "${shell_config}" ] && grep -q "mise環境変数の設定" "${shell_config}" 2>/dev/null; then
     echo "✅ 環境変数は既に${shell_config}に設定されています。"
     return 0
   fi
@@ -267,28 +242,18 @@ setup_environment_variables() {
   # 環境変数を追加
   {
     echo ""
-    echo "# asdf環境変数の設定"
-    if [ -f "${asdf_init_script}" ]; then
-      echo ". ${asdf_init_script}"
-    else
-      echo "# asdf初期化スクリプトが見つかりません: ${asdf_init_script}"
-      echo "export PATH=\"\${HOME}/.asdf/shims:\${PATH}\""
-    fi
-    echo "export ANSIBLE_PYTHON_INTERPRETER=\"\${HOME}/.asdf/shims/python3\""
+    echo "# mise環境変数の設定"
+    echo 'eval "$(mise activate zsh)"'
   } >> "${shell_config}"
 
   echo "✅ 環境変数の設定が完了しました。"
   echo "   次回のターミナル起動時から有効になります。"
 
   # 現在のシェルセッションにも環境変数を設定（スクリプト実行中のみ有効）
-  if [ -f "${asdf_init_script}" ]; then
-    # shellcheck source=/dev/null
-    . "${asdf_init_script}"
-    echo "   現在のシェルセッションにもasdfを読み込みました。"
-  else
-    ensure_asdf_in_path
+  if command -v mise >/dev/null 2>&1; then
+    eval "$(mise activate bash 2>/dev/null || mise activate zsh 2>/dev/null)" || true
+    echo "   現在のシェルセッションにもmiseを読み込みました。"
   fi
-  export ANSIBLE_PYTHON_INTERPRETER="${HOME}/.asdf/shims/python3"
 
   echo "   注意: スクリプト終了後も継続するには、以下を実行してください:"
   echo "   source ${shell_config}"
@@ -301,7 +266,7 @@ main() {
   setup_sudo
   check_homebrew
   install_xcode_command_line_tools
-  install_asdf
+  install_mise
   install_python
   install_ansible
   install_ansible_collections
@@ -314,8 +279,8 @@ main() {
   echo "=========================================="
   echo ""
   echo "インストール済み:"
-  echo "  ✅ asdf"
-  echo "  ✅ Python (asdf経由)"
+  echo "  ✅ mise"
+  echo "  ✅ Python (mise経由)"
   echo "  ✅ Ansible"
   echo "  ✅ Ansible Collections"
   echo "  ✅ 環境変数の設定"

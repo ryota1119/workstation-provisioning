@@ -11,8 +11,9 @@ brew_taps: []
 brew_base_formula:
 
 brew_formula:
+  # 基本パッケージ
   - act
-  - asdf
+  - mise
   - lazygit
   - tig
   - aws-elasticbeanstalk
@@ -41,7 +42,10 @@ brew_formula:
   - openapi-generator
   - ghq
   - gh
-  # asdf経由でPythonをビルドする際に必要な依存パッケージ
+  # 依存のためにインストールするパッケージ
+  - zlib
+  - openssl@3
+  # mise経由でPythonをビルドする際に必要な依存パッケージ
   - eza
   - bzip2
   - libffi
@@ -51,8 +55,29 @@ brew_formula:
   - tcl-tk
   - xz
   - zlib
-  # asdf経由でyarnをビルドする際に必要な依存パッケージ
+  # mise経由でyarnをビルドする際に必要な依存パッケージ
   - gpg
+  # mise経由でphpをビルドする際に必要な依存パッケージ
+  - autoconf
+  - automake
+  - bison
+  - freetype
+  - gd
+  - gettext
+  - icu4c
+  - krb5
+  - libedit
+  - libiconv
+  - libjpeg
+  - libpng
+  - libxml2
+  - libzip
+  - openssl@1.1
+  - pkg-config
+  - re2c
+
+
+
 
 ########################################################
 # homebrew cask packages
@@ -96,21 +121,9 @@ mas_apps:
   - { name: "LINE", id: 539883307 }
 
 ########################################################
-# asdf packages
+# mise packages
 ########################################################
-asdf_plugins:
-  - golang
-  - mysql
-  - nodejs
-  - php
-  - pnpm
-  - python
-  - ruby
-  - terraform
-  - terragrunt
-  - yarn
-
-asdf_plugins_versions:
+mise_tools_versions:
   - { name: "golang", version: "latest" }
   - { name: "mysql", version: "latest" }
   - { name: "nodejs", version: "latest" }
