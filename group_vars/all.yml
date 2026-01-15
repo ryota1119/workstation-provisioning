@@ -42,7 +42,6 @@ brew_formula:
   - zlib
   - openssl@3
   # mise経由でPythonをビルドする際に必要
-  - openssl
   - bzip2
   - libffi
   - readline
@@ -114,6 +113,7 @@ mise_tools_versions:
   - { name: "php", version: "latest" }
   - { name: "pnpm", version: "latest" }
   - { name: "python", version: "latest" }
+  - { name: "uv", version: "latest" }
   - { name: "ruby", version: "latest" }
   - { name: "terraform", version: "latest" }
   - { name: "terragrunt", version: "latest" }

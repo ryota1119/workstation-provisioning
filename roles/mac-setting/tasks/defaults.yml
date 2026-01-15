@@ -33,10 +33,6 @@
   loop_control:
     label: "{{ item.domain }}: {{ item.key }}"
   changed_when: true
-  notify:
-    - restart_finder
-    - restart_dock
-    - restart_systemuiserver
 
 - name: トラックパッドのタップでクリックを有効化（currentHost）
   ansible.builtin.command: "defaults -currentHost write -g com.apple.mouse.tapBehavior -int 1"
