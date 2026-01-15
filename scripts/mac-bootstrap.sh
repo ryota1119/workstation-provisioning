@@ -141,7 +141,7 @@ install_python() {
     export CPPFLAGS="-I/opt/homebrew/include"
     export LDFLAGS="-L/opt/homebrew/lib"
     export PKG_CONFIG_PATH="/opt/homebrew/lib/pkgconfig"
-    mise use --global python@${PYTHON_VERSION}
+    mise use python@${PYTHON_VERSION}
     echo "✅ Pythonのインストールが完了しました。"
   fi
 
