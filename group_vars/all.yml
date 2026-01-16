@@ -8,6 +8,7 @@ brew_taps: []
 # Formulaパッケージ
 brew_formula:
   - act
+  - awsdac
   - mise
   - lazygit
   - tig
