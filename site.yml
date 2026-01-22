@@ -1,10 +1,13 @@
 ---
-- name: ワークステーションプロビジョニング
+- name: 環境プロビジョニング
   hosts: localhost
   gather_facts: true
   become: false
 
   roles:
+    # OS共通ロール
+    - role: mise
+
     # macOS専用ロール
     - role: homebrew
       when: ansible_os_family == 'Darwin'
@@ -12,9 +15,6 @@
       when: ansible_os_family == 'Darwin'
     - role: mac-setting
       when: ansible_os_family == 'Darwin'
-
-    # OS共通ロール
-    - role: mise
 
     # dotfiles管理
     - role: chezmoi
