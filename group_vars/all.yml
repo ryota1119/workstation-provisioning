@@ -75,8 +75,8 @@ brew_casks_normal:
   - 1password-cli
   - alfred
   - alt-tab
-  - chatgpt
   - cursor
+  - figma
   - firefox
   - font-fira-code-nerd-font
   - font-hack-nerd-font
