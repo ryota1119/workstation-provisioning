@@ -7,17 +7,20 @@
   when: brew_taps is defined and brew_taps | length > 0
   loop_control:
     label: "{{ item }}"
+  ignore_errors: true  # 既に追加済みの場合の既知の不具合を回避
 
 - name: Formulaパッケージをインストール
   community.general.homebrew:
     name: "{{ brew_formula }}"
     state: present
   when: brew_formula is defined and brew_formula | length > 0
+  ignore_errors: true  # 既にインストール済みの場合の既知の不具合を回避
 
 - name: Caskアプリケーション（通常）をインストール
   community.general.homebrew_cask:
     name: "{{ brew_casks_normal }}"
     state: present
+  ignore_errors: true  # 既にインストール済みの場合の既知の不具合を回避
   when: brew_casks_normal is defined and brew_casks_normal | length > 0
 
 - name: Caskアプリケーション（sudo必要）の手動インストール案内
