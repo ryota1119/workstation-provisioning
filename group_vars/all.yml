@@ -14,7 +14,11 @@ brew_formula:
   - tig
   - aws-elasticbeanstalk
   - awscli
+  - bash
+  - chezmoi
+  - git
   - neovim
+  - usage
   - zsh
   - zsh-autosuggestions
   - zsh-completions
@@ -66,15 +70,16 @@ brew_formula:
   - libpng
   - libxml2
   - libzip
-  - openssl@1.1
   - pkg-config
   - re2c
 
 # Caskアプリケーション（通常）
 brew_casks_normal:
+  - 1password
   - 1password-cli
   - alfred
   - alt-tab
+  - chatwork
   - cursor
   - figma
   - firefox
