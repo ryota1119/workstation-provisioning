@@ -286,8 +286,8 @@ vault.yml
 vault.yaml
 
 # Local configuration overrides
-host_vars/localhost.yml
-host_vars/localhost.yaml
+# host_vars/{ホスト名}.yml は各マシン固有の設定としてGit管理する
+# inventory.ini は mac-bootstrap.sh 実行時に自動生成されるが、Git管理する
 group_vars/local.yml
 group_vars/local.yaml
 

@@ -7,54 +7,49 @@ brew_taps: []
 
 # Formulaパッケージ
 brew_formula:
-  - act
-  - awsdac
-  - mise
-  - lazygit
-  - tig
-  - aws-elasticbeanstalk
+  # 開発ツール
   - awscli
-  - bash
   - chezmoi
   - git
+  - gh
+  - ghq
+  - httpie
+  - lazygit
+  - mas
+  - mise
   - neovim
-  - usage
+  - tig
+  - tmux
+
+  # シェル
   - zsh
   - zsh-autosuggestions
   - zsh-completions
-  - tmux
-  - direnv
-  - ripgrep
-  - fd
-  - fzf
-  - tree
-  - age
+
+  # CLI ユーティリティ
   - colordiff
   - coreutils
   - curl
-  - wget
-  - jq
-  - nkf
-  - telnet
-  - unar
-  - mas
-  - httpie
-  - openapi-generator
-  - ghq
-  - gh
+  - direnv
   - eza
-  # 依存パッケージ
-  - zlib
-  - openssl@3
+  - fd
+  - fzf
+  - jq
+  - ripgrep
+  - telnet
+  - tree
+  - unar
+  - wget
+
   # mise経由でPythonをビルドする際に必要
   - bzip2
   - libffi
   - readline
-  - sqlite3
+  - sqlite
   - tcl-tk
   - xz
-  # mise経由でyarnをビルドする際に必要
-  - gpg
+  - zlib
+
   # mise経由でPHPをビルドする際に必要
   - autoconf
   - automake
@@ -62,15 +57,16 @@ brew_formula:
   - freetype
   - gd
   - gettext
-  - icu4c
+  - icu4c@78
+  - jpeg
   - krb5
   - libedit
   - libiconv
-  - libjpeg
   - libpng
   - libxml2
   - libzip
-  - pkg-config
+  - openssl@3
+  - pkgconf
   - re2c
 
 # Caskアプリケーション（通常）
@@ -79,9 +75,7 @@ brew_casks_normal:
   - 1password-cli
   - alfred
   - alt-tab
-  - chatwork
   - cursor
-  - figma
   - firefox
   - font-fira-code-nerd-font
   - font-hack-nerd-font
@@ -101,7 +95,6 @@ brew_casks_sudo_required:
   - docker-desktop
   - google-drive
   - keyboardcleantool
-  - nordvpn
   - zoom
 
 # Mac App Storeアプリ

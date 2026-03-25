@@ -198,6 +198,42 @@ install_ansible() {
 }
 
 ########################################################
+# inventory.ini の自動生成
+########################################################
+setup_inventory() {
+  local hostname
+  hostname=$(scutil --get LocalHostName)
+  local inventory_file
+  inventory_file="$(cd "$(dirname "$0")/.." && pwd)/inventory.ini"
+
+  echo "📋 inventory.ini を生成しています (ホスト名: ${hostname})..."
+  cat > "${inventory_file}" << EOF
+[local]
+${hostname} ansible_connection=local ansible_host=localhost
+EOF
+  echo "✅ inventory.ini を生成しました。"
+
+  # host_vars/{hostname}.yml が存在しない場合はテンプレートからコピー
+  local host_vars_dir
+  host_vars_dir="$(cd "$(dirname "$0")/.." && pwd)/host_vars"
+  local host_vars_file="${host_vars_dir}/${hostname}.yml"
+  local template_file="${host_vars_dir}/_template.yml"
+
+  if [ ! -f "${host_vars_file}" ]; then
+    if [ -f "${template_file}" ]; then
+      cp "${template_file}" "${host_vars_file}"
+      echo "✅ host_vars/${hostname}.yml をテンプレートから作成しました。"
+      echo "   必要に応じて編集してください: ${host_vars_file}"
+    else
+      echo "⚠️  host_vars/${hostname}.yml が存在しません。"
+      echo "   マシン固有の設定が必要な場合は作成してください: ${host_vars_file}"
+    fi
+  else
+    echo "✅ host_vars/${hostname}.yml が既に存在します。"
+  fi
+}
+
+########################################################
 # Ansible Collectionsのインストール
 ########################################################
 install_ansible_collections() {
@@ -270,6 +306,7 @@ main() {
   install_python
   install_ansible
   install_ansible_collections
+  setup_inventory
   setup_environment_variables
 
   # 完了メッセージ

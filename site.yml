@@ -12,7 +12,7 @@
     - role: homebrew
       when: ansible_os_family == 'Darwin'
     - role: mas
-      when: ansible_os_family == 'Darwin'
+      when: ansible_os_family == 'Darwin' and (enable_mas | default(false))
     - role: mac-setting
       when: ansible_os_family == 'Darwin'
 
