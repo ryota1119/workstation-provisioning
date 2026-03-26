@@ -63,6 +63,7 @@ brew_formula:
   - libedit
   - libiconv
   - libpng
+  - libyaml
   - libxml2
   - libzip
   - openssl@3
