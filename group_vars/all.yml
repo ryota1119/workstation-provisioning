@@ -90,6 +90,7 @@ brew_casks_normal:
   - rectangle
   - setapp
   - slack
+  - claude
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
