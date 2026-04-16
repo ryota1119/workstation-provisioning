@@ -76,6 +76,7 @@ brew_casks_normal:
   - 1password-cli
   - alfred
   - alt-tab
+  - claude
   - cursor
   - firefox
   - font-fira-code-nerd-font
@@ -83,6 +84,8 @@ brew_casks_normal:
   - gcloud-cli
   - google-chrome
   - jordanbaird-ice@beta
+  - keka
+  - kekaexternalhelper
   - iterm2
   - monitorcontrol
   - notion
@@ -90,7 +93,7 @@ brew_casks_normal:
   - rectangle
   - setapp
   - slack
-  - claude
+  - zen
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
