@@ -1,0 +1,11 @@
+; このファイルは inventory.ini のテンプレートです。
+;
+; 通常は `make mac-bootstrap` 実行時に scripts/mac-bootstrap.sh が
+; ホスト名（scutil --get LocalHostName の値）から inventory.ini を
+; 自動生成するため、手動でコピーする必要はありません。
+;
+; 手動で作成する場合は、このファイルを inventory.ini にコピーし、
+; <hostname> を `scutil --get LocalHostName` の出力に置き換えてください。
+
+[local]
+<hostname> ansible_connection=local ansible_host=localhost

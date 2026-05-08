@@ -7,13 +7,10 @@ enable_mas: false
 
 # このマシンにだけ追加するFormulaパッケージ
 brew_formula_extra:
-  - example
 
 # このマシンにだけ追加するCaskアプリ
 brew_casks_normal_extra:
   - chatwork
-  - figma
 
 # このマシンにだけ追加するCaskアプリ（sudo必要）
-# brew_casks_sudo_required_extra:
-#   - nordvpn
+brew_casks_sudo_required_extra:

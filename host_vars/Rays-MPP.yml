@@ -8,14 +8,11 @@ enable_mas: true
 
 # このマシンにだけ追加するFormulaパッケージ
 brew_formula_extra:
-  - example
 
 # このマシンにだけ追加するCaskアプリ
 brew_casks_normal_extra:
-  - example
-  - example
-  - example
+  - readdle-spark
 
 # このマシンにだけ追加するCaskアプリ（sudo必要）
 brew_casks_sudo_required_extra:
-  - example
+  - nordvpn

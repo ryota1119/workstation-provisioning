@@ -79,6 +79,7 @@ brew_casks_normal:
   - claude
   - cursor
   - firefox
+  - figma
   - font-fira-code-nerd-font
   - font-hack-nerd-font
   - gcloud-cli
@@ -92,7 +93,6 @@ brew_casks_normal:
   - postman
   - rectangle
   - setapp
-  - slack
   - zen
 
 # Caskアプリケーション（sudo必要）
@@ -122,6 +122,10 @@ mise_tools_versions:
   - { name: "terraform", version: "latest" }
   - { name: "terragrunt", version: "latest" }
   - { name: "yarn", version: "latest" }
+
+# Mac App Store アプリのインストール（true: 有効 / false: 無効）
+# host_vars/{ホスト名}.yml で上書き可能
+enable_mas: true
 
 # dotfilesリポジトリのURL
 chezmoi_repo_url: "git@github.com:ryota1119/dotfiles.git"

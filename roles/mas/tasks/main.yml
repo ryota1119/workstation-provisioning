@@ -5,6 +5,7 @@
     - install
     - upgrade
     - mas
+  when: enable_mas | default(true)
   block:
     - name: MASがインストールされているか確認
       ansible.builtin.stat:
@@ -31,6 +32,7 @@
 
 - name: Mac App Storeアプリのインストール
   ansible.builtin.import_tasks: install.yml
+  when: enable_mas | default(true)
   tags:
     - provision
     - install
@@ -38,5 +40,6 @@
 
 - name: Mac App Storeアプリのアップグレード
   ansible.builtin.import_tasks: upgrade.yml
+  when: enable_mas | default(true)
   tags:
     - upgrade
