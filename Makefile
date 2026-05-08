@@ -33,12 +33,12 @@ all: mac-bootstrap install-deps provision
 .PHONY: provision
 provision:
 	@echo "Running full provisioning (install)..."
-	@ansible-playbook site.yml --tags "install" -K
+	@ansible-playbook site.yml --tags "install"
 
 .PHONY: upgrade
 upgrade:
 	@echo "Upgrading packages and dotfiles..."
-	@ansible-playbook site.yml --tags "upgrade" -K
+	@ansible-playbook site.yml --tags "upgrade"
 
 # ============================================================
 # Individual Roles
@@ -52,7 +52,7 @@ homebrew:
 .PHONY: mas
 mas:
 	@echo "Running mas role..."
-	@ansible-playbook site.yml --tags "mas" -K
+	@ansible-playbook site.yml --tags "mas"
 
 .PHONY: mise
 mise:

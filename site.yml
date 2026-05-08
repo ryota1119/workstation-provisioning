@@ -1,15 +1,24 @@
 ---
 - name: 環境プロビジョニング
-  hosts: localhost
+  hosts: local
   gather_facts: true
   become: false
 
   roles:
-    - role: mise
+    # 1. Homebrew: 各種言語ランタイムのビルド依存ライブラリを最初に導入
     - role: homebrew
       when: ansible_os_family == 'Darwin'
+
+    # 2. Mac App Store: 他ロールに依存しない
     - role: mas
       when: ansible_os_family == 'Darwin'
+
+    # 3. mise: Homebrewのライブラリに依存する言語ランタイムを導入
+    - role: mise
+
+    # 4. macOSシステム設定
     - role: mac-setting
       when: ansible_os_family == 'Darwin'
+
+    # 5. chezmoi: 全ツール導入後に dotfiles を適用
     - role: chezmoi

@@ -4,8 +4,6 @@
   loop: "{{ mas_apps | default([]) }}"
   loop_control:
     label: "{{ item.name }} ({{ item.id }})"
-  become: true
-  become_method: sudo
   register: mas_install_result
   ignore_errors: true
   changed_when: "'Installed' in mas_install_result.stdout"

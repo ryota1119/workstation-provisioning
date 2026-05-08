@@ -15,7 +15,5 @@
   loop: "{{ outdated_app_ids | default([]) }}"
   loop_control:
     label: "{{ item }}"
-  become: true
-  become_method: sudo
   when: outdated_app_ids is defined and outdated_app_ids | length > 0
   changed_when: true

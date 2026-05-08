@@ -254,45 +254,16 @@ install_ansible_collections() {
 }
 
 ########################################################
-# 環境変数の設定（シェル設定ファイルに追加）
+# 現在のシェルセッションにmiseを読み込む
 ########################################################
-setup_environment_variables() {
-  local shell_config
-
-  # シェル設定ファイルを決定（zshに統一）
-  shell_config="${HOME}/.zshrc"
-
-  # 既に設定されているか確認
-  if [ -f "${shell_config}" ] && grep -q "mise環境変数の設定" "${shell_config}" 2>/dev/null; then
-    echo "✅ 環境変数は既に${shell_config}に設定されています。"
-    return 0
-  fi
-
-  echo "📦 環境変数を${shell_config}に追加しています..."
-
-  # シェル設定ファイルが存在しない場合は作成
-  if [ ! -f "${shell_config}" ]; then
-    touch "${shell_config}"
-  fi
-
-  # 環境変数を追加
-  {
-    echo ""
-    echo "# mise環境変数の設定"
-    echo 'eval "$(mise activate zsh)"'
-  } >> "${shell_config}"
-
-  echo "✅ 環境変数の設定が完了しました。"
-  echo "   次回のターミナル起動時から有効になります。"
-
-  # 現在のシェルセッションにも環境変数を設定（スクリプト実行中のみ有効）
+# 注: ~/.zshrc への mise activate の追記は dotfiles（chezmoi）側で管理する。
+# ここでは、後続の make provision 等で mise コマンドを使えるよう
+# 現在のシェルセッションにのみ環境を読み込む。
+load_mise_in_current_shell() {
   if command -v mise >/dev/null 2>&1; then
     eval "$(mise activate bash 2>/dev/null || mise activate zsh 2>/dev/null)" || true
-    echo "   現在のシェルセッションにもmiseを読み込みました。"
+    echo "✅ 現在のシェルセッションにmiseを読み込みました。"
   fi
-
-  echo "   注意: スクリプト終了後も継続するには、以下を実行してください:"
-  echo "   source ${shell_config}"
 }
 
 ########################################################
@@ -307,7 +278,7 @@ main() {
   install_ansible
   install_ansible_collections
   setup_inventory
-  setup_environment_variables
+  load_mise_in_current_shell
 
   # 完了メッセージ
   echo ""
@@ -320,19 +291,14 @@ main() {
   echo "  ✅ Python (mise経由)"
   echo "  ✅ Ansible"
   echo "  ✅ Ansible Collections"
-  echo "  ✅ 環境変数の設定"
   echo ""
   echo "📝 注意:"
-  echo "   このスクリプトは子プロセスで実行されているため、"
-  echo "   スクリプト終了後も環境変数を継続するには、以下を実行してください:"
-  echo ""
-  echo "   source ~/.zshrc"
-  echo ""
-  echo "   または、次回ターミナル起動時から自動的に有効になります。"
+  echo "   ~/.zshrc への mise activate 設定は make provision 実行時に"
+  echo "   chezmoi（dotfiles）経由で適用されます。"
   echo ""
   echo "次のステップ:"
-  echo "  1. 環境変数を反映: source ~/.zshrc"
-  echo "  2. 以下を実行: make provision"
+  echo "  1. 以下を実行: make provision"
+  echo "  2. ターミナルを再起動 or source ~/.zshrc"
   echo ""
 }
 

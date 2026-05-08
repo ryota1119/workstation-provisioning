@@ -15,9 +15,12 @@
 - name: 初期化が必要な場合は通知
   ansible.builtin.debug:
     msg: |
-      ℹ️  chezmoiリポジトリが設定されていません。
-      group_vars/all.yml に chezmoi_repo_url を設定するか、手動で初期化してください：
-      $ chezmoi init https://github.com/username/dotfiles.git
+      ℹ️  chezmoiリポジトリが未初期化で、かつ chezmoi_repo_url も未定義です。
+      group_vars/all.yml に chezmoi_repo_url を設定してください：
+        chezmoi_repo_url: "git@github.com:<username>/dotfiles.git"
+
+      または手動で初期化:
+        $ chezmoi init <repo-url>
   when:
     - not chezmoi_repo.stat.exists
     - chezmoi_repo_url is not defined

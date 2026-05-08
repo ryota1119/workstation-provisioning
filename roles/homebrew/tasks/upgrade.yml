@@ -7,10 +7,10 @@
 
 - name: Formulaパッケージをアップグレード
   ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew upgrade --formula {{ item }}"
-  loop: "{{ outdated_formulas.stdout_lines | default([]) }}"
+  loop: "{{ outdated_formulas.stdout_lines | default([], true) }}"
   loop_control:
     label: "{{ item }}"
-  when: outdated_formulas.stdout_lines | length > 0
+  when: (outdated_formulas.stdout_lines | default([], true)) | length > 0
   changed_when: true
 
 - name: 更新可能なCaskパッケージを取得
@@ -19,18 +19,26 @@
   changed_when: false
   failed_when: false
 
-- name: 更新可能なCaskパッケージを分類
+- name: 更新可能なCaskパッケージを分類（base + extra を考慮）
   ansible.builtin.set_fact:
-    outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_normal | default([])) | list }}"
-    outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_sudo_required | default([])) | list }}"
-  when: outdated_casks_all.stdout_lines | length > 0
+    casks_normal_all: "{{ (brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true)) }}"
+    casks_sudo_all: "{{ (brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true)) }}"
+  when: (outdated_casks_all.stdout_lines | default([], true)) | length > 0
+
+- name: 更新対象のCaskを抽出
+  ansible.builtin.set_fact:
+    outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', casks_normal_all) | list }}"
+    outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', casks_sudo_all) | list }}"
+  when:
+    - (outdated_casks_all.stdout_lines | default([], true)) | length > 0
+    - casks_normal_all is defined
 
 - name: 通常のCaskパッケージをアップグレード
   ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew upgrade --cask {{ item }} --greedy"
-  loop: "{{ outdated_casks_normal | default([]) }}"
+  loop: "{{ outdated_casks_normal | default([], true) }}"
   loop_control:
     label: "{{ item }}"
-  when: outdated_casks_normal is defined and outdated_casks_normal | length > 0
+  when: (outdated_casks_normal | default([], true)) | length > 0
   changed_when: true
 
 - name: Cask（sudo必要）の手動アップグレード案内
@@ -38,4 +46,4 @@
     msg: |
       以下のCaskはrootパスワードが必要なため、手動アップグレードが必要です：
       brew upgrade --cask {{ outdated_casks_sudo | join(' ') }}
-  when: outdated_casks_sudo is defined and outdated_casks_sudo | length > 0
+  when: (outdated_casks_sudo | default([], true)) | length > 0
