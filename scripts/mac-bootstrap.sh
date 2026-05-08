@@ -28,7 +28,9 @@ readonly PYTHON_VERSION=3.13.7
 # mise環境を有効化
 ensure_mise_in_path() {
   if command -v mise >/dev/null 2>&1; then
+    set +u
     eval "$(mise activate bash 2>/dev/null || mise activate zsh 2>/dev/null)" || true
+    set -u
   fi
 }
 
@@ -261,7 +263,9 @@ install_ansible_collections() {
 # 現在のシェルセッションにのみ環境を読み込む。
 load_mise_in_current_shell() {
   if command -v mise >/dev/null 2>&1; then
+    set +u
     eval "$(mise activate bash 2>/dev/null || mise activate zsh 2>/dev/null)" || true
+    set -u
     echo "✅ 現在のシェルセッションにmiseを読み込みました。"
   fi
 }
