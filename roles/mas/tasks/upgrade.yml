@@ -5,15 +5,18 @@
   changed_when: false
   failed_when: false
 
-- name: アプリIDを抽出
-  ansible.builtin.set_fact:
-    outdated_app_ids: "{{ outdated_mas_apps.stdout_lines | map('trim') | map('split', ' ') | map('first') | list }}"
+- name: アップデート対象がある場合に手動アップデート案内
+  ansible.builtin.debug:
+    msg: |
+      以下のMac App Storeアプリにアップデートがあります：
+      {{ outdated_mas_apps.stdout_lines | join('
+      ') }}
+
+      `mas install --force` はsudoが必要なため自動更新できません。
+      App Storeアプリの「アップデート」タブから手動でアップデートしてください。
   when: outdated_mas_apps.stdout_lines | length > 0
 
-- name: Mac App Storeアプリをアップグレード
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/mas install --force {{ item }}"
-  loop: "{{ outdated_app_ids | default([]) }}"
-  loop_control:
-    label: "{{ item }}"
-  when: outdated_app_ids is defined and outdated_app_ids | length > 0
-  changed_when: true
+- name: アップデート対象がない場合の通知
+  ansible.builtin.debug:
+    msg: "✅ Mac App Storeアプリは全て最新です。"
+  when: outdated_mas_apps.stdout_lines | length == 0
