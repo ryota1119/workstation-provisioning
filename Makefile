@@ -13,6 +13,8 @@ help:
 	@echo "  homebrew            - Homebrewパッケージのインストール"
 	@echo "  mas                 - Mac App Storeアプリのインストール"
 	@echo "  mise                - miseでツールバージョンをインストール"
+	@echo "  mise-prune          - 未使用かつ同一ツールに複数あるmiseのバージョンを削除（dry-run）"
+	@echo "  mise-prune-apply    - 上記を実際に削除（対話確認あり）"
 	@echo "  chezmoi             - chezmoiのセットアップ（dotfiles管理）"
 	@echo "  mac-setting         - macOSシステム設定の適用"
 	@echo ""
@@ -58,6 +60,14 @@ mas:
 mise:
 	@echo "Running mise role..."
 	@ansible-playbook site.yml --tags "mise"
+
+.PHONY: mise-prune
+mise-prune:
+	@sh ./scripts/mise-prune.sh
+
+.PHONY: mise-prune-apply
+mise-prune-apply:
+	@sh ./scripts/mise-prune.sh --apply
 
 .PHONY: chezmoi
 chezmoi:
