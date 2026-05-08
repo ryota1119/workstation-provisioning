@@ -1,0 +1,34 @@
+---
+- name: dotfilesリポジトリの存在確認
+  ansible.builtin.stat:
+    path: ~/.local/share/chezmoi/.git
+  register: chezmoi_repo
+
+- name: dotfilesを更新（git pull + apply）
+  ansible.builtin.shell: chezmoi update --force
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
+  register: chezmoi_update_result
+  changed_when: "'Updated' in chezmoi_update_result.stdout or chezmoi_update_result.stdout | length > 0"
+  failed_when: false
+
+- name: 更新結果を表示
+  ansible.builtin.debug:
+    msg: "{{ chezmoi_update_result.stdout }}"
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
+    - chezmoi_update_result.stdout is defined
+    - chezmoi_update_result.stdout | length > 0
+
+- name: 1Password未認証によりchezmoi updateをスキップ
+  ansible.builtin.debug:
+    msg: |
+      ⏭️  1Password CLIが認証されていないため、chezmoi updateをスキップしました。
+      認証後、手動で実行してください：
+      $ op signin
+      $ chezmoi update --force
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc != 0

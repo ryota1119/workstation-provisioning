@@ -1,7 +1,6 @@
 ---
 - name: Homebrewセットアップ
   tags:
-    - provision
     - install
     - upgrade
     - homebrew
@@ -23,7 +22,6 @@
 - name: Homebrewパッケージインストール処理
   ansible.builtin.import_tasks: install.yml
   tags:
-    - provision
     - install
     - homebrew
 
@@ -31,3 +29,4 @@
   ansible.builtin.import_tasks: upgrade.yml
   tags:
     - upgrade
+    - homebrew

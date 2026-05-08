@@ -5,16 +5,11 @@
   become: false
 
   roles:
-    # OS共通ロール
     - role: mise
-
-    # macOS専用ロール
     - role: homebrew
       when: ansible_os_family == 'Darwin'
     - role: mas
-      when: ansible_os_family == 'Darwin' and (enable_mas | default(false))
+      when: ansible_os_family == 'Darwin'
     - role: mac-setting
       when: ansible_os_family == 'Darwin'
-
-    # dotfiles管理
     - role: chezmoi

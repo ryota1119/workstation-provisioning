@@ -1,7 +1,6 @@
 ---
 - name: MASセットアップ
   tags:
-    - provision
     - install
     - upgrade
     - mas
@@ -34,7 +33,6 @@
   ansible.builtin.import_tasks: install.yml
   when: enable_mas | default(true)
   tags:
-    - provision
     - install
     - mas
 
@@ -43,3 +41,4 @@
   when: enable_mas | default(true)
   tags:
     - upgrade
+    - mas

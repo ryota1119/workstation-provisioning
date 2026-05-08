@@ -1,7 +1,8 @@
 ---
 - name: chezmoiセットアップ
   tags:
-    - provision
+    - install
+    - upgrade
     - chezmoi
   block:
     - name: chezmoiをインストール
@@ -19,8 +20,8 @@
       ansible.builtin.debug:
         msg: |
           ⚠️  1Passwordにサインインしていません。
-          dotfilesのシークレット情報が取得できないため、chezmoi updateはスキップされます。
-          
+          dotfilesのシークレット情報が取得できないため、chezmoi update/applyはスキップされます。
+
           手動で認証してから実行する場合：
           $ op signin
           $ chezmoi update --force
@@ -29,12 +30,18 @@
 - name: dotfilesの初期化
   ansible.builtin.import_tasks: init.yml
   tags:
-    - provision
+    - install
     - chezmoi
 
-- name: dotfilesの更新
+- name: dotfilesの更新（git pull）
+  ansible.builtin.import_tasks: update.yml
+  tags:
+    - upgrade
+    - chezmoi
+
+- name: dotfilesの適用
   ansible.builtin.import_tasks: apply.yml
   tags:
-    - provision
+    - install
+    - upgrade
     - chezmoi
-    - apply

@@ -1,368 +1,281 @@
 # macOS Provisioning
 
-macOS環境のセットアップと管理を自動化するAnsibleプロジェクトです。Homebrewを使用してアプリケーションのインストール、更新、管理を行います。
+macOS環境のセットアップと管理を自動化するAnsibleプロジェクトです。Homebrew・Mac App Store・mise・chezmoiを統合的に管理します。
 
 ## 🚀 特徴
 
-- **自動化されたセットアップ**: 新規macOS環境の初期設定を自動化
-- **スマートなアップグレード**: sudo権限が必要なアプリを自動分離
-- **Homebrew統合**: Formula、Cask、MASアプリを一元管理
-- **1Password連携**: SSH認証エージェントとして1Passwordを使用
-- **dotfiles管理**: chezmoiでdotfilesを自動展開
-- **Ansible**: 冪等性を保った設定管理
-- **開発環境管理**: asdfで複数言語のバージョン管理
-- **マルチOS対応**: macOS専用roleと共通roleを分離し、将来的なLinux対応も可能
+- **2コマンド運用**: 初回は `make provision`、日常は `make upgrade` の2つで完結
+- **マシン固有設定**: `host_vars/{ホスト名}.yml` で機種ごとに追加パッケージを管理
+- **冪等性**: 何度実行しても同じ結果になる（既にインストール済みは自動スキップ）
+- **sudo必要なCaskの分離**: 対話的な操作が必要なアプリは手動インストール案内のみ表示
+- **dotfiles管理**: chezmoiで複数マシン間のdotfilesを同期
+- **1Password連携**: SSH認証エージェント・シークレット管理に1Passwordを使用
+- **mise統合**: 言語ランタイムのバージョン管理
 
 ## 📋 前提条件
 
-- macOS 10.15以降
+- macOS（Apple Silicon）
 - 管理者権限
 - インターネット接続
-- 1Passwordアプリ（手動インストール済み）
+- 1Passwordアプリ（手動インストール・サインイン済み）
 - Homebrew（手動インストール済み）
 - Git（Homebrewでインストール済み）
 
-## 🛠️ セットアップ
+## 🛠️ 初回セットアップ
 
 ### 1. 1Passwordのインストールとログイン
 
-1Passwordアプリを手動でインストールし、ログインしておいてください。
-
-App Storeからインストールするか、[公式サイト](https://downloads.1password.com/mac/1Password.zip)からダウンロード
+App Storeまたは[公式サイト](https://1password.com/downloads/mac/)からインストールし、サインインしておいてください。
 
 ### 2. SSH認証エージェントを1Passwordに変更
 
-1PasswordのSSH認証エージェントを使用するように設定します。
+1Password → 設定 → 開発者 → 「sshエージェントを使用」にチェック。
 
-1Password → 設定 → 開発者 → 「sshエージェントを使用」にチェックを入れる
-
-以下の環境変数を設定
+`~/.zshrc` などに以下を追加：
 
 ```bash
 export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
 ```
 
-この設定を永続化するには、`~/.zshrc` または `~/.zprofile` に追加してください：
+### 3. Homebrewのインストール
 
 ```bash
-echo 'export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock' >> ~/.zshrc
-```
-
-### 3. Homebrewのインストールとパスの設定
-
-Homebrewを手動でインストールし、パスを通しておきます。
-
-```bash
-# Homebrewのインストール
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-
-# パスの設定（Apple Silicon Macの場合）
 eval "$(/opt/homebrew/bin/brew shellenv)"
 ```
 
-### 4. Gitのインストール
-
-リポジトリをクローンするために、HomebrewでGitをインストールします。
+### 4. Gitとリポジトリのクローン
 
 ```bash
 brew install git
-```
-
-### 5. リポジトリのクローン
-
-workstation-provisioningリポジトリをクローンします。
-
-```bash
 git clone git@github.com:ryota1119/workstation-provisioning.git
 cd workstation-provisioning
 ```
 
-### 6. ブートストラップスクリプトの実行
-
-asdf、Python、Ansibleなどを自動インストールします。
+### 5. ブートストラップ + プロビジョニング
 
 ```bash
-make mac-bootstrap
+make all
 ```
 
-このスクリプトは以下を実行します：
+`make all` は以下を順に実行します：
 
-- Homebrewの確認
-- Xcode Command Line Toolsのインストール
-- asdfのインストール（Homebrew経由）
-- Pythonのインストール（asdf経由）
-- Ansibleのインストール
-- Ansibleコレクションのインストール
+1. `make mac-bootstrap` - Xcode CLT・mise・Python・Ansibleの導入と `inventory.ini` / `host_vars/{ホスト名}.yml` の自動生成
+2. `make install-deps` - Ansible Collectionsのインストール
+3. `make provision` - 全ロールを一括インストール
 
-### 7. プロビジョニング
+## 🎯 利用可能なコマンド
 
-Ansibleプレイブックを実行して、アプリケーションのインストールと設定を行います。
+### 主要コマンド（よく使う）
 
-```bash
-make provision
-```
+| コマンド | 用途 | 実行頻度 |
+|---|---|---|
+| `make all` | 新規PC初回セットアップ（bootstrap + deps + provision） | 初回のみ |
+| `make provision` | 全ロールを一括インストール | 稀 |
+| `make upgrade` | パッケージとdotfilesを一括更新 | 日常 |
+
+### 個別ロール（必要時のみ）
+
+| コマンド | 内容 |
+|---|---|
+| `make homebrew` | Homebrewパッケージ（Formula + Cask）のインストール |
+| `make mas` | Mac App Storeアプリのインストール |
+| `make mise` | miseで言語ランタイムをインストール |
+| `make chezmoi` | dotfilesの初期化・更新・適用 |
+| `make mac-setting` | macOSシステム設定の適用 |
+
+### ブートストラップ・ユーティリティ
+
+| コマンド | 内容 |
+|---|---|
+| `make mac-bootstrap` | Xcode CLT・Ansible等の導入（初回のみ） |
+| `make install-deps` | Ansible Collectionsのインストール |
+| `make doctor` | 必須ツールの事前チェック |
+| `make check` | Ansible構文チェック |
+| `make clean` | 一時ファイルのクリーンアップ |
 
 ## 📁 プロジェクト構造
 
 ```plaintext
 workstation-provisioning/
-├── ansible.cfg              # Ansible設定
-├── site.yml                 # メインプレイブック
-├── inventory.ini            # インベントリファイル
-├── requirements.yml         # Ansibleコレクション依存関係
-├── Makefile                 # タスク管理
+├── ansible.cfg                  # Ansible設定
+├── site.yml                     # メインプレイブック
+├── inventory.ini                # インベントリ（mac-bootstrap.shが自動生成、Git管理外）
+├── inventory.ini.example        # インベントリのテンプレート
+├── requirements.yml             # Ansibleコレクション依存関係
+├── Makefile                     # タスク管理
 ├── group_vars/
-│   └── all.yml             # パッケージリストと共通変数
+│   └── all.yml                  # 全マシン共通の設定とパッケージリスト
+├── host_vars/
+│   ├── _template.yml            # マシン固有設定のテンプレート
+│   └── {ホスト名}.yml            # マシン固有設定（自動生成）
 ├── roles/
-│   ├── homebrew/           # Homebrew管理ロール（macOS専用）
-│   │   └── tasks/
-│   │       ├── main.yml        # エントリーポイント
-│   │       ├── install.yml     # インストール処理
-│   │       └── upgrade.yml     # アップグレード処理
-│   ├── mas/                # Mac App Store管理ロール（macOS専用）
-│   │   └── tasks/
-│   │       ├── main.yml        # エントリーポイント
-│   │       ├── install.yml     # インストール処理
-│   │       └── upgrade.yml     # アップグレード処理
-│   ├── mac-setting/        # macOSシステム設定ロール（macOS専用）
-│   │   └── tasks/
-│   │       ├── main.yml        # エントリーポイント
-│   │       └── defaults.yml    # システム設定
-│   ├── asdf/               # asdf言語バージョン管理ロール（OS共通）
-│   │   └── tasks/
-│   │       └── main.yml
-│   └── chezmoi/            # dotfiles管理ロール（OS共通）
-│       └── tasks/
-│           ├── main.yml        # エントリーポイント
-│           ├── init.yml        # 初期化処理
-│           └── apply.yml       # 更新処理（リポジトリから取得して適用）
+│   ├── homebrew/tasks/
+│   │   ├── main.yml             # エントリーポイント
+│   │   ├── install.yml          # インストール処理
+│   │   └── upgrade.yml          # アップグレード処理
+│   ├── mas/tasks/
+│   │   ├── main.yml
+│   │   ├── install.yml
+│   │   └── upgrade.yml
+│   ├── mise/tasks/
+│   │   ├── main.yml
+│   │   └── install.yml          # 初回のみインストール（upgradeなし）
+│   ├── chezmoi/tasks/
+│   │   ├── main.yml
+│   │   ├── init.yml             # リポジトリ初期化（初回のみ）
+│   │   ├── update.yml           # git pull相当（chezmoi update）
+│   │   └── apply.yml            # ローカル適用（chezmoi apply）
+│   └── mac-setting/tasks/
+│       ├── main.yml
+│       └── defaults.yml         # macOSシステム設定
 └── scripts/
-    └── mac-bootstrap.sh     # 初期セットアップスクリプト
+    └── mac-bootstrap.sh         # 初回ブートストラップスクリプト
 ```
 
-## 🎯 利用可能なコマンド
+## 🏷️ Ansible Tagsの設計
 
-### 基本コマンド
+playbook 全体は2つのトップレベルタグと、ロール個別タグで制御できます。
 
-- `make help` - 利用可能なコマンドの一覧表示
-- `make mac-bootstrap` - ブートストラップスクリプトの実行（asdf、Python、Ansibleをインストール）
-- `make install-deps` - Ansibleコレクションのインストール
-- `make provision` - Ansibleでプロビジョニング実行
+| タグ | 含まれるロール | 用途 |
+|---|---|---|
+| `install` | homebrew, mas, mise, chezmoi(init+apply), mac-setting | 初回インストール（`make provision`） |
+| `upgrade` | homebrew, mas, chezmoi(update+apply) | 日常更新（`make upgrade`） |
+| `homebrew` / `mas` / `mise` / `chezmoi` / `mac-setting` | 該当ロールのみ | 個別ロール実行 |
 
-### 個別ロール実行
+ポイント:
 
-- `make homebrew` - Homebrewパッケージのインストール
-- `make mas` - Mac App Storeアプリのインストール
-- `make asdf` - asdfプラグインとバージョンのインストール
-- `make chezmoi` - chezmoiのセットアップ（初期化 + 更新）
-- `make mac-setting` - macOSシステム設定の適用
+- **mise** は `latest` を初回のみ導入する仕様のため、`upgrade` には含まれません
+- **mac-setting** は Finder/Dock の再起動が走るため、`upgrade` には含まれません
+- **chezmoi** は `install` 時は init+apply、`upgrade` 時は update+apply と、状況に応じた処理を実行します
 
-### アップグレードコマンド
+## 🔧 設定ファイル
 
-- `make upgrade` - **日常的に使用（推奨）**: Homebrew + Mac App Storeの全アップグレード
-- `make upgrade-homebrew` - Homebrewパッケージのみアップグレード
-- `make upgrade-mas` - Mac App Storeアプリのみアップグレード
+### `group_vars/all.yml` - 全マシン共通
 
-### その他
-
-- `make doctor` - 必須ツールの事前チェック
-- `make clean` - 一時ファイルのクリーンアップ
-
-## 🔧 設定
-
-### パッケージの管理
-
-`group_vars/all.yml` でパッケージとdotfilesリポジトリを管理します：
+すべてのマシンで共通で使うパッケージや設定を記述します。
 
 ```yaml
-# Homebrewフォーミュラ（CLIツール）
+# Homebrew Formula（CLIツール）
 brew_formula:
   - git
-  - vim
   - jq
+  - mise
+  ...
 
-# Caskアプリケーション（通常 - 自動アップグレード対象）
+# Cask（通常 - 自動アップグレード対象）
 brew_casks_normal:
-  - visual-studio-code
+  - 1password
+  - cursor
   - google-chrome
-  - slack
+  ...
 
-# Caskアプリケーション（sudo必要 - 手動アップグレード）
+# Cask（sudo必要 - 手動インストール案内）
 brew_casks_sudo_required:
   - docker-desktop
   - zoom
+  ...
 
 # Mac App Store アプリ
 mas_apps:
-  - { name: "1Password", id: 443987910 }
-  - { name: "Slack", id: 803453959 }
+  - { name: "1Password for Safari", id: 1569813296 }
+  ...
 
-# asdf言語バージョン管理
-asdf_plugins:
-  - nodejs
-  - python
-  - ruby
+# miseで管理する言語ランタイム
+mise_tools_versions:
+  - { name: "node", version: "latest" }
+  ...
 
-asdf_plugins_versions:
-  - { name: "nodejs", version: "20.11.0" }
-  - { name: "python", version: "3.12.0" }
+# Mac App Store アプリのインストール（host_varsで上書き可能）
+enable_mas: true
 
-# chezmoi dotfilesリポジトリ
-chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
+# dotfilesリポジトリ
+chezmoi_repo_url: "git@github.com:ryota1119/dotfiles.git"
 ```
 
-### Caskアップグレードの仕組み
+### `host_vars/{ホスト名}.yml` - マシン固有
 
-**通常Cask** (`brew_casks_normal`):
+各マシン固有の追加設定を記述します。`mac-bootstrap.sh` 実行時に `_template.yml` から自動生成されます。
 
-- 日常的な`make packages-upgrade`で自動アップグレード
-- sudo権限不要で安全に実行可能
+```yaml
+# Mac App Storeを無効化（仕事用Macなど）
+enable_mas: false
 
-**sudo必要Cask** (`brew_casks_sudo_required`):
+# このマシンにだけ追加するFormula
+brew_formula_extra:
+  - some-cli-tool
 
-- 初回インストールは自動実行
-- アップグレード時は通知のみ（手動実行が必要）
-- Docker DesktopやZoomなど、対話的な操作が必要なアプリ
+# このマシンにだけ追加するCask
+brew_casks_normal_extra:
+  - chatwork
+  - readdle-spark
 
-## 💡 使用例
+# このマシンにだけ追加するCask（sudo必要）
+brew_casks_sudo_required_extra:
+  - nordvpn
+```
 
-### 初回セットアップ（新しいMac）
+`group_vars/all.yml` の `brew_formula` などの共通リストと、`host_vars/{ホスト名}.yml` の `brew_formula_extra` などのマシン固有リストは**結合された上で**インストールされます。
+
+## 💡 利用シーン
+
+### 新規Macのセットアップ
 
 ```bash
-# 1. 1Passwordをインストールしてログイン
-# 2. SSH認証エージェントを1Passwordに設定
-export SSH_AUTH_SOCK=~/Library/Group\ Containers/2BUA8C4S2C.com.1password/t/agent.sock
+# 前提（手動）: 1Password、Homebrew、Gitを導入
 
-# 3. Homebrewをインストールしてパスを通す
-/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-eval "$(/opt/homebrew/bin/brew shellenv)"  # Apple Silicon Macの場合
-
-# 4. Gitをインストール
-brew install git
-
-# 5. リポジトリをクローン
 git clone git@github.com:ryota1119/workstation-provisioning.git
 cd workstation-provisioning
-
-# 6. ブートストラップスクリプトを実行（asdf、Python、Ansibleをインストール）
-make mac-bootstrap
-
-# 7. 全てのパッケージをインストール
-make provision
+make all
 ```
 
-### 日常的なアップグレード（推奨）
+### 日常的なアップグレード
 
 ```bash
-# Homebrew + Mac App Storeを自動アップグレード
 make upgrade
 ```
 
-実行すると：
+実行内容：
 
-- ✅ Formulaパッケージがアップグレードされる
-- ✅ 通常Caskアプリがアップグレードされる
-- ✅ Mac App Storeアプリがアップグレードされる
-- 📋 sudo必要なCaskは通知のみ（手動実行が必要）
+- ✅ Homebrew Formulaのアップグレード
+- ✅ 通常Caskアプリのアップグレード
+- ✅ Mac App Storeアプリのアップグレード
+- ✅ chezmoi: dotfilesの更新（`chezmoi update --force`）+ 適用（`chezmoi apply`）
+- 📋 sudo必要Caskは通知のみ（手動実行が必要）
+- ⏭️ mise / mac-setting はスキップ
 
-### sudo必要なアプリの手動アップグレード
+### sudo必要なCaskを手動アップグレード
 
-アップグレード後に通知された場合：
+`make upgrade` 後にコンソールに表示されるコマンドを実行：
 
 ```bash
-# 個別にアップグレード
-brew upgrade --cask docker-desktop
-brew upgrade --cask zoom
+brew upgrade --cask docker-desktop zoom
 ```
 
-### 個別ロールの実行
+### マシンに新しいアプリを追加
 
 ```bash
-# Homebrewパッケージのみ追加インストール
+# host_vars/{ホスト名}.yml に追加
+brew_casks_normal_extra:
+  - new-app
+
+# 反映
 make homebrew
-
-# asdfプラグインとバージョンのみ更新
-make asdf
-
-# chezmoiのセットアップ（初期化 + 更新）
-make chezmoi
-
-# macOSシステム設定のみ適用
-make mac-setting
 ```
 
-### 1Passwordとchezmoiの連携
+## 📝 chezmoi（dotfiles管理）
 
-chezmoiは1Passwordと連携してシークレット情報（APIキー、トークンなど）を安全に管理できます。
+chezmoiは複数マシン間でdotfilesを管理するためのツールです。1Passwordと連携してシークレット情報を安全に扱えます。
 
-#### 初回セットアップ
+### 動作モード
 
-```bash
-# 1. 1Passwordアプリをインストールしてログイン（手動で実施済み）
+| 実行コマンド | 動作 |
+|---|---|
+| `make provision`（install タグ） | `init`（リポジトリclone）+ `apply`（ローカル適用） |
+| `make upgrade`（upgrade タグ） | `update`（git pull）+ `apply`（ローカル適用） |
+| `make chezmoi` | 上記すべて（init + update + apply） |
 
-# 2. 1Password CLIをインストール（手動）
-brew install --cask 1password
-brew install 1password-cli
-
-# 3. 1Password CLIの認証確認
-op account list  # 確認
-
-# 4. group_vars/all.ymlにdotfilesリポジトリURLを設定
-# chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
-
-# 5. chezmoiのセットアップ（初期化 + 更新）
-make chezmoi
-```
-
-#### 日常的な使い方
-
-```bash
-# dotfilesの変更を取得して適用（リモートリポジトリから最新を取得）
-ansible-playbook site.yml -i inventory.ini --tags apply,chezmoi
-
-# または、provisionタグで実行（初期化も含む）
-make provision
-```
-
-## 📝 chezmoiによるdotfiles管理
-
-chezmoiは複数マシン間でdotfilesを管理するためのツールです。1Passwordと連携してシークレット情報を安全に管理できます。
-
-### chezmoiの設定
-
-#### 1. dotfilesリポジトリの準備
-
-GitHubなどにdotfilesリポジトリを作成し、`group_vars/all.yml`にURLを設定します：
-
-```yaml
-chezmoi_repo_url: "https://github.com/yourusername/dotfiles.git"
-```
-
-#### 2. タグによる実行制御
-
-chezmoiロールは以下のタグで制御できます：
-
-- **`provision`タグ**: 初期化 + 更新（初回セットアップ時）
-  - chezmoiのインストール
-  - 1Password認証の確認
-  - リポジトリの初期化（`init.yml`）
-  - リモートから最新を取得して適用（`apply.yml`）
-
-- **`apply`タグ**: 更新のみ（既に初期化済みの場合）
-  - 1Password認証の確認
-  - リモートから最新を取得して適用（`apply.yml`）
-
-#### 3. 実行方法
-
-```bash
-# 初回セットアップ（初期化 + 更新）
-make provision  # または make chezmoi
-
-# 既に初期化済みの場合（更新のみ）
-ansible-playbook site.yml -i inventory.ini --tags apply,chezmoi
-```
-
-### 1Passwordとの連携例
+### 1Password CLIとの連携
 
 chezmoiのテンプレートファイル内で1Passwordのシークレットを参照できます：
 
@@ -375,44 +288,29 @@ chezmoiのテンプレートファイル内で1Passwordのシークレットを�
   token = {{ onepasswordRead "op://Private/GitHub/token" }}
 ```
 
-### よくあるchezmoiコマンド
+1Password CLIが未認証の場合、`update` / `apply` は**自動的にスキップ**されて警告が表示されます。
+
+### よく使うchezmoiコマンド
 
 ```bash
-# 状態確認
-chezmoi status
-
-# 差分確認
-chezmoi diff
-
-# 特定ファイルの適用
-chezmoi apply ~/.zshrc
-
-# リモートから最新を取得して適用
-chezmoi update --force
-
-# 手動での初期化（Ansible経由でない場合）
-chezmoi init https://github.com/yourusername/dotfiles.git
-chezmoi update --force
+chezmoi status              # 状態確認
+chezmoi diff                # 差分確認
+chezmoi apply               # ローカルに適用
+chezmoi update --force      # git pull + apply
 ```
 
 ## 🔍 トラブルシューティング
 
 ### Homebrewが見つからない場合
 
-Homebrewがインストールされていない場合は、手動でインストールしてください：
-
 ```bash
 /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
-eval "$(/opt/homebrew/bin/brew shellenv)"  # Apple Silicon Macの場合
+eval "$(/opt/homebrew/bin/brew shellenv)"
 ```
 
-### 権限エラーが発生する場合
+### 「It seems there is already an App at」エラーが出る場合
 
-管理者権限でターミナルを実行してください。
-
-### 特定のアプリケーションがインストールされない場合
-
-`group_vars/all.yml`の構文を確認し、アプリケーション名が正しいかチェックしてください。
+すでにApp Storeなどから手動インストール済みのアプリが存在する場合、本プロジェクトでは自動的にスキップして処理を続行します。問題ありません。
 
 ### chezmoiでdotfilesが適用されない場合
 
@@ -420,36 +318,24 @@ eval "$(/opt/homebrew/bin/brew shellenv)"  # Apple Silicon Macの場合
 # 1Passwordの認証状態を確認
 op account list
 
-# chezmoiの状態を確認
-chezmoi status
+# サインインし直す
+op signin
 
-# 詳細なログで実行
-chezmoi update -v
-
-# 手動で更新（デバッグ用）
+# 手動で更新
 chezmoi update --force
 ```
 
-### 1Passwordのシークレットが取得できない場合
+### `host_vars/{ホスト名}.yml` が存在しないと言われる場合
 
-- 1Passwordアプリにサインインしているか確認
-- 1Password CLIがインストールされているか確認（`op --version`）
-- chezmoiテンプレート内のシークレット参照が正しいか確認
+`make mac-bootstrap` を実行すると、ホスト名（`scutil --get LocalHostName`）から自動生成されます。
 
 ## 🤝 貢献
 
 1. このリポジトリをフォーク
-2. フィーチャーブランチを作成 (`git checkout -b feature/amazing-feature`)
-3. 変更をコミット (`git commit -m 'Add amazing feature'`)
-4. ブランチにプッシュ (`git push origin feature/amazing-feature`)
-5. プルリクエストを作成
+2. フィーチャーブランチを作成
+3. 変更をコミット
+4. プルリクエストを作成
 
 ## 📄 ライセンス
 
 このプロジェクトはMITライセンスの下で公開されています。
-
-## 🙏 謝辞
-
-- [Homebrew](https://brew.sh/) - macOS用パッケージマネージャー
-- [Ansible](https://www.ansible.com/) - 自動化ツール
-- [Brewfile](https://github.com/Homebrew/homebrew-bundle) - Homebrew依存関係管理

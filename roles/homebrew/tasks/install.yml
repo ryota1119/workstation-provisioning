@@ -32,6 +32,10 @@
   when:
     - ((brew_casks_normal | default([])) + (brew_casks_normal_extra | default([]))) | length > 0
     - (((brew_casks_normal | default([])) + (brew_casks_normal_extra | default([]))) | difference(installed_casks.stdout_lines | default([]))) | length > 0
+  register: cask_install_result
+  failed_when:
+    - cask_install_result is failed
+    - "'already an App at' not in (cask_install_result.msg | default(''))"
   loop_control:
     label: "{{ item }}"
 
