@@ -84,6 +84,7 @@ brew_casks_normal:
   - font-hack-nerd-font
   - gcloud-cli
   - google-chrome
+  - google-gemini
   - jordanbaird-ice@beta
   - keka
   - kekaexternalhelper
