@@ -91,6 +91,7 @@ brew_casks_normal:
   - iterm2
   - monitorcontrol
   - notion
+  - obsidian
   - postman
   - rectangle
   - setapp
