@@ -96,7 +96,6 @@ brew_casks_normal:
   - postman
   - rectangle
   - setapp
-  - zen
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
