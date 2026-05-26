@@ -41,6 +41,10 @@
   when: (outdated_casks_normal | default([], true)) | length > 0
   changed_when: true
 
+- name: 古いバージョンのファイルを削除
+  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew cleanup"
+  changed_when: false
+
 - name: Cask（sudo必要）の手動アップグレード案内
   ansible.builtin.debug:
     msg: |
