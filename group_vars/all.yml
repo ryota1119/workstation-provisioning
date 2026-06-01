@@ -3,7 +3,8 @@
 homebrew_prefix: /opt/homebrew
 
 # Tapリポジトリ
-brew_taps: []
+brew_taps:
+  - ray-on-code/tap
 
 # Formulaパッケージ
 brew_formula:
@@ -13,6 +14,7 @@ brew_formula:
   - git
   - gh
   - ghq
+  - ray-on-code/tap/ghs
   - httpie
   - lazygit
   - mas
