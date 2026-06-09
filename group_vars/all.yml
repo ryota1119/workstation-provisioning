@@ -29,6 +29,7 @@ brew_formula:
   - zsh-completions
 
   # CLI ユーティリティ
+  - bat
   - colordiff
   - coreutils
   - curl
@@ -86,18 +87,20 @@ brew_casks_normal:
   - font-fira-code-nerd-font
   - font-hack-nerd-font
   - gcloud-cli
+  - ghostty
   - google-chrome
   - google-gemini
   - jordanbaird-ice@beta
   - keka
   - kekaexternalhelper
-  - iterm2
+  - logi-options+
   - monitorcontrol
   - notion
   - obsidian
   - postman
   - rectangle
   - setapp
+  - superset
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
