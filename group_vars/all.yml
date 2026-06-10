@@ -36,12 +36,14 @@ brew_formula:
   - direnv
   - eza
   - fd
+  - ffmpeg
   - fzf
   - jq
   - ripgrep
   - telnet
   - tree
   - unar
+  - usage
   - wget
 
   # mise経由でPythonをビルドする際に必要
@@ -104,6 +106,7 @@ brew_casks_normal:
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
+  - blackhole-2ch
   - docker-desktop
   - google-drive
   - keyboardcleantool
