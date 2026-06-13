@@ -1,12 +1,12 @@
 ---
 - name: 更新可能なFormulaパッケージを取得
-  ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew outdated --formula --quiet"
+  ansible.builtin.command: "{{ brew_bin }} outdated --formula --quiet"
   register: outdated_formulas
   changed_when: false
   failed_when: false
 
 - name: Formulaパッケージをアップグレード
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew upgrade --formula {{ item }}"
+  ansible.builtin.command: "{{ brew_bin }} upgrade --formula {{ item }}"
   loop: "{{ outdated_formulas.stdout_lines | default([], true) }}"
   loop_control:
     label: "{{ item }}"
@@ -14,7 +14,7 @@
   changed_when: true
 
 - name: 更新可能なCaskパッケージを取得
-  ansible.builtin.shell: "{{ homebrew_prefix }}/bin/brew outdated --cask --greedy --quiet"
+  ansible.builtin.command: "{{ brew_bin }} outdated --cask --greedy --quiet"
   register: outdated_casks_all
   changed_when: false
   failed_when: false
@@ -33,7 +33,7 @@
         outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', casks_sudo_all) | list }}"
 
     - name: 通常のCaskパッケージをアップグレード
-      ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew upgrade --cask {{ item }} --greedy"
+      ansible.builtin.command: "{{ brew_bin }} upgrade --cask {{ item }} --greedy"
       loop: "{{ outdated_casks_normal }}"
       loop_control:
         label: "{{ item }}"
@@ -48,5 +48,5 @@
       when: outdated_casks_sudo | length > 0
 
 - name: 古いバージョンのファイルを削除
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew cleanup"
+  ansible.builtin.command: "{{ brew_bin }} cleanup"
   changed_when: false
