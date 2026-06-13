@@ -48,6 +48,9 @@ Brewfile.lock.yaml
 .env.local
 .env.*.local
 
+# Claude Code
+.claude/worktrees/
+
 # IDE/Editor
 .vscode/
 .idea/
