@@ -19,35 +19,34 @@
   changed_when: false
   failed_when: false
 
-- name: 更新可能なCaskパッケージを分類（base + extra を考慮）
-  ansible.builtin.set_fact:
-    casks_normal_all: "{{ (brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true)) }}"
-    casks_sudo_all: "{{ (brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true)) }}"
+- name: Caskパッケージのアップグレード処理
   when: (outdated_casks_all.stdout_lines | default([], true)) | length > 0
+  block:
+    - name: 更新可能なCaskパッケージを分類（base + extra を考慮）
+      ansible.builtin.set_fact:
+        casks_normal_all: "{{ (brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true)) }}"
+        casks_sudo_all: "{{ (brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true)) }}"
 
-- name: 更新対象のCaskを抽出
-  ansible.builtin.set_fact:
-    outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', casks_normal_all) | list }}"
-    outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', casks_sudo_all) | list }}"
-  when:
-    - (outdated_casks_all.stdout_lines | default([], true)) | length > 0
-    - casks_normal_all is defined
+    - name: 更新対象のCaskを抽出
+      ansible.builtin.set_fact:
+        outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', casks_normal_all) | list }}"
+        outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', casks_sudo_all) | list }}"
 
-- name: 通常のCaskパッケージをアップグレード
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew upgrade --cask {{ item }} --greedy"
-  loop: "{{ outdated_casks_normal | default([], true) }}"
-  loop_control:
-    label: "{{ item }}"
-  when: (outdated_casks_normal | default([], true)) | length > 0
-  changed_when: true
+    - name: 通常のCaskパッケージをアップグレード
+      ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew upgrade --cask {{ item }} --greedy"
+      loop: "{{ outdated_casks_normal }}"
+      loop_control:
+        label: "{{ item }}"
+      when: outdated_casks_normal | length > 0
+      changed_when: true
+
+    - name: Cask（sudo必要）の手動アップグレード案内
+      ansible.builtin.debug:
+        msg: |
+          以下のCaskはrootパスワードが必要なため、手動アップグレードが必要です：
+          brew upgrade --cask {{ outdated_casks_sudo | join(' ') }}
+      when: outdated_casks_sudo | length > 0
 
 - name: 古いバージョンのファイルを削除
   ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew cleanup"
   changed_when: false
-
-- name: Cask（sudo必要）の手動アップグレード案内
-  ansible.builtin.debug:
-    msg: |
-      以下のCaskはrootパスワードが必要なため、手動アップグレードが必要です：
-      brew upgrade --cask {{ outdated_casks_sudo | join(' ') }}
-  when: (outdated_casks_sudo | default([], true)) | length > 0

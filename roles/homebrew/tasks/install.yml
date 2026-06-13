@@ -4,16 +4,30 @@
     name: "{{ item }}"
     state: present
   loop: "{{ brew_taps | default([], true) }}"
-  when: (brew_taps | default([], true)) | length > 0
   loop_control:
     label: "{{ item }}"
+
+- name: Tapの信頼状態を確認
+  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew tap-info --json {{ item }}"
+  loop: "{{ brew_taps | default([], true) }}"
+  register: tap_info_results
+  changed_when: false
+  loop_control:
+    label: "{{ item }}"
+
+- name: Tapリポジトリを信頼
+  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew trust --tap {{ item.item }}"
+  loop: "{{ tap_info_results.results | default([]) }}"
+  when: not ((item.stdout | from_json)[0].trusted | default(true))
+  changed_when: true
+  loop_control:
+    label: "{{ item.item }}"
 
 - name: Formulaパッケージをインストール
   community.general.homebrew:
     name: "{{ item }}"
     state: present
   loop: "{{ (brew_formula | default([], true)) + (brew_formula_extra | default([], true)) }}"
-  when: ((brew_formula | default([], true)) + (brew_formula_extra | default([], true))) | length > 0
   loop_control:
     label: "{{ item }}"
 
@@ -29,9 +43,7 @@
     name: "{{ item }}"
     state: present
   loop: "{{ ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | difference(installed_casks.stdout_lines | default([], true)) }}"
-  when:
-    - ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | length > 0
-    - (((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | difference(installed_casks.stdout_lines | default([], true))) | length > 0
+  when: ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | length > 0
   register: cask_install_result
   failed_when:
     - cask_install_result is failed

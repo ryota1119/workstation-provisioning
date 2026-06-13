@@ -1,9 +1,4 @@
 ---
-- name: dotfilesリポジトリの存在確認
-  ansible.builtin.stat:
-    path: ~/.local/share/chezmoi/.git
-  register: chezmoi_repo
-
 - name: dotfilesを適用（ローカル変更を上書き）
   ansible.builtin.shell: chezmoi apply --force
   when:

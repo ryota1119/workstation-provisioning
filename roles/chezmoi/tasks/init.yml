@@ -1,9 +1,4 @@
 ---
-- name: dotfilesリポジトリの存在確認
-  ansible.builtin.stat:
-    path: ~/.local/share/chezmoi/.git
-  register: chezmoi_repo
-
 - name: chezmoiの初期化
   ansible.builtin.shell: "chezmoi init {{ chezmoi_repo_url }}"
   when:
