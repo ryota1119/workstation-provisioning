@@ -95,7 +95,6 @@ brew_casks_normal:
   - jordanbaird-ice@beta
   - keka
   - kekaexternalhelper
-  - logi-options+
   - monitorcontrol
   - notion
   - obsidian
@@ -109,6 +108,7 @@ brew_casks_sudo_required:
   - docker-desktop
   - google-drive
   - keyboardcleantool
+  - logi-options+
   - zoom
 
 # Mac App Storeアプリ
