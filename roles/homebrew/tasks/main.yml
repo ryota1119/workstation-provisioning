@@ -7,7 +7,7 @@
   block:
     - name: Homebrewがインストールされているか確認
       ansible.builtin.stat:
-        path: "{{ homebrew_prefix }}/bin/brew"
+        path: "{{ brew_bin }}"
       register: brew_stat
 
     - name: Homebrewが見つからない場合は処理を中断
@@ -29,4 +29,3 @@
   ansible.builtin.import_tasks: upgrade.yml
   tags:
     - upgrade
-    - homebrew

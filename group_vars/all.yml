@@ -1,6 +1,7 @@
 ---
 # Homebrewインストールパス
 homebrew_prefix: /opt/homebrew
+brew_bin: "{{ homebrew_prefix }}/bin/brew"
 
 # Tapリポジトリ
 brew_taps:

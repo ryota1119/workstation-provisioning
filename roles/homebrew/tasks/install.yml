@@ -8,7 +8,7 @@
     label: "{{ item }}"
 
 - name: Tapの信頼状態を確認
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew tap-info --json {{ item }}"
+  ansible.builtin.command: "{{ brew_bin }} tap-info --json {{ item }}"
   loop: "{{ brew_taps | default([], true) }}"
   register: tap_info_results
   changed_when: false
@@ -16,7 +16,7 @@
     label: "{{ item }}"
 
 - name: Tapリポジトリを信頼
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew trust --tap {{ item.item }}"
+  ansible.builtin.command: "{{ brew_bin }} trust --tap {{ item.item }}"
   loop: "{{ tap_info_results.results | default([]) }}"
   when: not ((item.stdout | from_json)[0].trusted | default(true))
   changed_when: true
@@ -32,7 +32,7 @@
     label: "{{ item }}"
 
 - name: インストール済みCask一覧を取得
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/brew list --cask"
+  ansible.builtin.command: "{{ brew_bin }} list --cask"
   register: installed_casks
   changed_when: false
   failed_when: false
