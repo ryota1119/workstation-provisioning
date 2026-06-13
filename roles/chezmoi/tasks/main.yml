@@ -42,7 +42,6 @@
   ansible.builtin.import_tasks: update.yml
   tags:
     - upgrade
-    - chezmoi
 
 - name: dotfilesの適用
   ansible.builtin.import_tasks: apply.yml
