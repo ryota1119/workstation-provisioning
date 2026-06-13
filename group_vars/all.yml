@@ -106,7 +106,6 @@ brew_casks_normal:
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
-  - blackhole-2ch
   - docker-desktop
   - google-drive
   - keyboardcleantool

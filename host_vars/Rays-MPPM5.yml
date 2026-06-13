@@ -11,8 +11,9 @@ brew_formula_extra:
 
 # このマシンにだけ追加するCaskアプリ
 brew_casks_normal_extra:
-  - readdle-spark
+  - slack
 
 # このマシンにだけ追加するCaskアプリ（sudo必要）
 brew_casks_sudo_required_extra:
   - nordvpn
+
