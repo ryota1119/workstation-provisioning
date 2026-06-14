@@ -1,6 +1,6 @@
 ---
 - name: Mac App Storeアプリをインストール
-  ansible.builtin.command: "{{ homebrew_prefix }}/bin/mas install {{ item.id }}"
+  ansible.builtin.command: "{{ mas_bin }} install {{ item.id }}"
   loop: "{{ mas_apps | default([]) }}"
   loop_control:
     label: "{{ item.name }} ({{ item.id }})"

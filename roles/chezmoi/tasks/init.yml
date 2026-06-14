@@ -1,6 +1,6 @@
 ---
 - name: chezmoiの初期化
-  ansible.builtin.shell: "chezmoi init {{ chezmoi_repo_url }}"
+  ansible.builtin.shell: "{{ chezmoi_bin }} init {{ chezmoi_repo_url }}"
   when:
     - not chezmoi_repo.stat.exists
     - chezmoi_repo_url is defined
