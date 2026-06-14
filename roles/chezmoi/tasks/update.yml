@@ -1,6 +1,6 @@
 ---
 - name: dotfilesを更新（git pull + apply）
-  ansible.builtin.shell: chezmoi update --force
+  ansible.builtin.shell: "{{ chezmoi_bin }} update --force"
   when:
     - chezmoi_repo.stat.exists
     - op_auth_status.rc == 0

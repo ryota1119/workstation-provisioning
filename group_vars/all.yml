@@ -2,6 +2,9 @@
 # Homebrewインストールパス
 homebrew_prefix: /opt/homebrew
 brew_bin: "{{ homebrew_prefix }}/bin/brew"
+mas_bin: "{{ homebrew_prefix }}/bin/mas"
+chezmoi_bin: "{{ homebrew_prefix }}/bin/chezmoi"
+mise_bin: "{{ homebrew_prefix }}/bin/mise"
 
 # Tapリポジトリ
 brew_taps:

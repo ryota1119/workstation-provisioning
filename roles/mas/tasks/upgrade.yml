@@ -1,6 +1,6 @@
 ---
 - name: 更新可能なMac App Storeアプリを取得
-  ansible.builtin.shell: "{{ homebrew_prefix }}/bin/mas outdated"
+  ansible.builtin.shell: "{{ mas_bin }} outdated"
   register: outdated_mas_apps
   changed_when: false
   failed_when: false

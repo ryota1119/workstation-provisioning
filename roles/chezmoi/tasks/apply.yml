@@ -1,6 +1,6 @@
 ---
 - name: dotfilesを適用（ローカル変更を上書き）
-  ansible.builtin.shell: chezmoi apply --force
+  ansible.builtin.shell: "{{ chezmoi_bin }} apply --force"
   when:
     - chezmoi_repo.stat.exists
     - op_auth_status.rc == 0

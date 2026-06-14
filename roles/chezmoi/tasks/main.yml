@@ -5,11 +5,6 @@
     - upgrade
     - chezmoi
   block:
-    - name: chezmoiをインストール
-      ansible.builtin.package:
-        name: chezmoi
-        state: present
-
     - name: 1Password CLIの認証状態を確認
       ansible.builtin.shell: op account list 2>/dev/null
       register: op_auth_status
