@@ -18,6 +18,7 @@ brew_formula:
   - git
   - gh
   - ghq
+  - hermes-agent
   - ray-on-code/tap/ghs
   - httpie
   - lazygit
@@ -48,6 +49,7 @@ brew_formula:
   - tree
   - unar
   - usage
+  - webp
   - wget
 
   # mise経由でPythonをビルドする際に必要
@@ -87,6 +89,8 @@ brew_casks_normal:
   - alt-tab
   - claude
   - claude-code
+  - codex
+  - codex-app
   - cursor
   - firefox
   - figma
