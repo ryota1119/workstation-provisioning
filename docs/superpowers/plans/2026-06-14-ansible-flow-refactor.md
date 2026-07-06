@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Ansible タグ設計の明確化・`brew_bin` 変数導入・`shell`→`command` 統一により、実行フローの意図を明確にする。
+**Goal:** Ansible タグ設計の明確化・実行バイナリ変数導入・全ロールの `shell`→`command` 統一により、実行フローの意図を明確にする。
 
 **Architecture:** 3つの独立した変更（タグ設計 / 変数導入 / モジュール統一）をファイル単位で順番に適用する。各タスク後に構文チェックで確認し、最後に `--list-tasks` でタグ動作を検証する。
 
@@ -10,12 +10,12 @@
 
 ---
 
-### Task 1: `brew_bin` 変数を `group_vars/all.yml` に追加
+### Task 1: 実行バイナリ変数を `group_vars/all.yml` に追加
 
 **Files:**
 - Modify: `group_vars/all.yml`
 
-- [ ] **Step 1: `brew_bin` 変数を追加**
+- [ ] **Step 1: `brew_bin`、`mas_bin`、`chezmoi_bin`、`mise_bin` 変数を追加**
 
 `homebrew_prefix: /opt/homebrew` の直下に追加する。
 
@@ -30,6 +30,9 @@ homebrew_prefix: /opt/homebrew
 # group_vars/all.yml（変更後）
 homebrew_prefix: /opt/homebrew
 brew_bin: "{{ homebrew_prefix }}/bin/brew"
+mas_bin: "{{ homebrew_prefix }}/bin/mas"
+chezmoi_bin: "{{ homebrew_prefix }}/bin/chezmoi"
+mise_bin: "{{ homebrew_prefix }}/bin/mise"
 
 # Tapリポジトリ
 ```
@@ -46,7 +49,7 @@ ansible-playbook --syntax-check -i inventory.ini.example site.yml
 
 ```bash
 git add group_vars/all.yml
-git commit -m "brew_bin 変数を追加"
+git commit -m "実行バイナリ変数を追加"
 ```
 
 ---
@@ -139,14 +142,20 @@ git commit -m "install.yml: brew_bin 変数を適用"
 
 ---
 
-### Task 3: `homebrew/tasks/upgrade.yml` に `brew_bin` 適用 + `shell`→`command` 統一
+### Task 3: 全ロールに実行バイナリ変数を適用 + `shell`→`command` 統一
 
 **Files:**
 - Modify: `roles/homebrew/tasks/upgrade.yml`
+- Modify: `roles/mas/tasks/upgrade.yml`
+- Modify: `roles/chezmoi/tasks/main.yml`
+- Modify: `roles/chezmoi/tasks/init.yml`
+- Modify: `roles/chezmoi/tasks/update.yml`
+- Modify: `roles/chezmoi/tasks/apply.yml`
+- Modify: `roles/mise/tasks/install.yml`
 
-対象: `{{ homebrew_prefix }}/bin/brew` → `{{ brew_bin }}`（5箇所）、`ansible.builtin.shell` → `ansible.builtin.command`（2箇所）
+対象: 各実行バイナリを対応する変数に置換し、`ansible.builtin.shell` → `ansible.builtin.command` を全ロールに適用する。`op account list` は `2>/dev/null` を除去する。
 
-- [ ] **Step 1: `upgrade.yml` を書き換え**
+- [ ] **Step 1: 対象ファイルを書き換え**
 
 ```yaml
 ---
@@ -214,8 +223,8 @@ ansible-playbook --syntax-check -i inventory.ini.example site.yml
 - [ ] **Step 3: コミット**
 
 ```bash
-git add roles/homebrew/tasks/upgrade.yml
-git commit -m "upgrade.yml: brew_bin 適用、shell → command 統一"
+git add roles/homebrew/tasks/upgrade.yml roles/mas/tasks/upgrade.yml roles/chezmoi/tasks/main.yml roles/chezmoi/tasks/init.yml roles/chezmoi/tasks/update.yml roles/chezmoi/tasks/apply.yml roles/mise/tasks/install.yml
+git commit -m "全ロールの shell を command に統一"
 ```
 
 ---
@@ -375,7 +384,7 @@ git commit -m "mas/main.yml: upgrade タグを install のみに限定"
 **Files:**
 - Modify: `roles/chezmoi/tasks/main.yml`
 
-変更点: `import_tasks: update.yml` のタグから `chezmoi` を除去
+変更点: `import_tasks: update.yml` のタグから `chezmoi` を除去し、`op account list` をリダイレクトなしの `command` に変更
 
 - [ ] **Step 1: `main.yml` を書き換え**
 
@@ -393,7 +402,7 @@ git commit -m "mas/main.yml: upgrade タグを install のみに限定"
         state: present
 
     - name: 1Password CLIの認証状態を確認
-      ansible.builtin.shell: op account list 2>/dev/null
+      ansible.builtin.command: op account list
       register: op_auth_status
       changed_when: false
       failed_when: false
@@ -485,12 +494,12 @@ ansible-playbook site.yml --tags chezmoi --list-tasks -i inventory.ini.example
 
 ```bash
 git push -u origin <branch-name>
-gh pr create --title "Ansible 実行フロー リファクタリング（タグ設計・brew_bin・shell統一）" --body "$(cat <<'EOF'
+gh pr create --title "Ansible 実行フロー リファクタリング（タグ設計・実行バイナリ変数・shell統一）" --body "$(cat <<'EOF'
 ## Summary
 
 - **タグ設計の明確化**: 個別ロールタグ（homebrew / mas / chezmoi）を install 操作のみに限定。upgrade は --tags upgrade 経由のみで実行されるよう変更
-- **brew_bin 変数の導入**: group_vars/all.yml に brew_bin を定義し、各ファイルに散在していた {{ homebrew_prefix }}/bin/brew を一元化
-- **shell → command 統一**: upgrade.yml の brew outdated コマンドをパイプ不要のため ansible.builtin.command に統一
+- **実行バイナリ変数の導入**: group_vars/all.yml に brew_bin / mas_bin / chezmoi_bin / mise_bin を定義し、各ファイルに散在していた実行パスを一元化
+- **shell → command 統一**: homebrew / mas / chezmoi / mise のシェル機能が不要なコマンドを ansible.builtin.command に統一し、op account list の 2>/dev/null を除去
 
 ## Test plan
 

@@ -6,7 +6,7 @@
     - chezmoi
   block:
     - name: 1Password CLIの認証状態を確認
-      ansible.builtin.shell: op account list 2>/dev/null
+      ansible.builtin.command: op account list
       register: op_auth_status
       changed_when: false
       failed_when: false
