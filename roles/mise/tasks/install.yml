@@ -1,6 +1,6 @@
 ---
 - name: 指定バージョンをインストール
-  ansible.builtin.shell: "{{ mise_bin }} use --global {{ item.name }}@{{ item.version }}"
+  ansible.builtin.command: "{{ mise_bin }} use --global {{ item.name }}@{{ item.version }}"
   loop: "{{ mise_tools_versions | default([]) }}"
   loop_control:
     label: "{{ item.name }}@{{ item.version }}"
@@ -9,5 +9,5 @@
   failed_when: false
 
 - name: mise shimsを更新
-  ansible.builtin.shell: "{{ mise_bin }} reshim"
+  ansible.builtin.command: "{{ mise_bin }} reshim"
   changed_when: false

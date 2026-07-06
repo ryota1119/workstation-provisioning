@@ -6,7 +6,7 @@
 
 1. 個別ロールタグ（`homebrew`, `mas`, `chezmoi`）が install と upgrade の両方を起動する
 2. `{{ homebrew_prefix }}/bin/brew` というパスが10箇所以上に散在している
-3. `upgrade.yml` で `shell` と `command` モジュールが混在している
+3. 全ロールで `shell` と `command` モジュールが混在している
 
 ## スコープ外
 
@@ -98,11 +98,14 @@
 
 ### 設計
 
-`group_vars/all.yml` に変数を追加し、全箇所を置換する。
+`group_vars/all.yml` に `brew_bin` に加えて `mas_bin`、`chezmoi_bin`、`mise_bin` を追加し、全箇所を置換する。
 
 ```yaml
 # group_vars/all.yml に追加
 brew_bin: "{{ homebrew_prefix }}/bin/brew"
+mas_bin: "{{ homebrew_prefix }}/bin/mas"
+chezmoi_bin: "{{ homebrew_prefix }}/bin/chezmoi"
+mise_bin: "{{ homebrew_prefix }}/bin/mise"
 ```
 
 使用例：
@@ -120,8 +123,8 @@ ansible.builtin.command: "{{ brew_bin }} upgrade --formula {{ item }}"
 
 ### 問題
 
-`homebrew/tasks/upgrade.yml` で `brew outdated` の取得に `ansible.builtin.shell` を使っているが、
-パイプ・リダイレクト・変数展開を使っていないため `command` で十分。
+`homebrew/tasks/upgrade.yml` だけでなく、`mas`、`chezmoi`、`mise` ロールでも
+パイプ・リダイレクト・変数展開が不要なコマンドに `ansible.builtin.shell` を使っているため、`command` に統一する。
 
 `ansible.builtin.shell` はシェル展開のオーバーヘッドがあり、セキュリティリスクも高い。
 
@@ -143,20 +146,25 @@ ansible.builtin.command: "{{ brew_bin }} upgrade --formula {{ item }}"
   ansible.builtin.command: "{{ brew_bin }} outdated --cask --greedy --quiet"
 ```
 
-`chezmoi/tasks/main.yml` の `op account list` も同様に確認・統一する。
+`chezmoi/tasks/main.yml` の `op account list` は `2>/dev/null` を除去し、`ansible.builtin.command` に統一する。
 
 ---
 
 ## 変更対象ファイル一覧
 
-| ファイル | 変更1（タグ） | 変更2（brew_bin） | 変更3（shell） |
+| ファイル | 変更1（タグ） | 変更2（実行バイナリ変数） | 変更3（shell） |
 |---------|:-----------:|:----------------:|:-------------:|
 | `group_vars/all.yml` | | ✅ 追加 | |
 | `homebrew/tasks/main.yml` | | ✅ | |
 | `homebrew/tasks/install.yml` | | ✅ | |
 | `homebrew/tasks/upgrade.yml` | | ✅ | ✅ |
 | `mas/tasks/main.yml` | ✅ | ✅ | |
-| `chezmoi/tasks/main.yml` | ✅ | | |
+| `mas/tasks/upgrade.yml` | | ✅ | ✅ |
+| `chezmoi/tasks/main.yml` | ✅ | | ✅ |
+| `chezmoi/tasks/init.yml` | | ✅ | ✅ |
+| `chezmoi/tasks/update.yml` | | ✅ | ✅ |
+| `chezmoi/tasks/apply.yml` | | ✅ | ✅ |
+| `mise/tasks/install.yml` | | ✅ | ✅ |
 
 ---
 
