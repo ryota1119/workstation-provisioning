@@ -15,6 +15,7 @@
 
     # 3. mise: Homebrewのライブラリに依存する言語ランタイムを導入
     - role: mise
+      when: ansible_os_family == 'Darwin'
 
     # 4. macOSシステム設定
     - role: mac-setting
@@ -22,3 +23,4 @@
 
     # 5. chezmoi: 全ツール導入後に dotfiles を適用
     - role: chezmoi
+      when: ansible_os_family == 'Darwin'
