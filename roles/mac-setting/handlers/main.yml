@@ -1,0 +1,24 @@
+---
+- name: Finderを再起動
+  ansible.builtin.command: killall Finder
+  changed_when: false
+  failed_when: false
+  listen: macOS設定変更後に関連サービスを再起動
+
+- name: Dockを再起動
+  ansible.builtin.command: killall Dock
+  changed_when: false
+  failed_when: false
+  listen: macOS設定変更後に関連サービスを再起動
+
+- name: SystemUIServerを再起動
+  ansible.builtin.command: killall SystemUIServer
+  changed_when: false
+  failed_when: false
+  listen: macOS設定変更後に関連サービスを再起動
+
+- name: cfprefsdを再起動
+  ansible.builtin.command: killall cfprefsd
+  changed_when: false
+  failed_when: false
+  listen: macOS設定変更後に関連サービスを再起動

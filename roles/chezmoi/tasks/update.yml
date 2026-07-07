@@ -1,12 +1,71 @@
 ---
+- name: dotfilesリポジトリのリモート情報を取得
+  ansible.builtin.command:
+    argv:
+      - "{{ chezmoi_bin }}"
+      - git
+      - --
+      - fetch
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
+  register: chezmoi_fetch_result
+  changed_when: false
+
+- name: dotfilesリポジトリの現在HEADを確認
+  ansible.builtin.command:
+    argv:
+      - "{{ chezmoi_bin }}"
+      - git
+      - --
+      - rev-parse
+      - HEAD
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
+  register: chezmoi_head_result
+  changed_when: false
+
+- name: dotfilesリポジトリのupstream HEADを確認
+  ansible.builtin.command:
+    argv:
+      - "{{ chezmoi_bin }}"
+      - git
+      - --
+      - rev-parse
+      - "@{u}"
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
+  register: chezmoi_upstream_result
+  changed_when: false
+  failed_when: false
+
+- name: dotfilesの未適用状態を確認
+  ansible.builtin.command:
+    argv:
+      - "{{ chezmoi_bin }}"
+      - status
+  when:
+    - chezmoi_repo.stat.exists
+    - op_auth_status.rc == 0
+  register: chezmoi_status_result
+  changed_when: false
+
 - name: dotfilesを更新（git pull + apply）
-  ansible.builtin.shell: "{{ chezmoi_bin }} update --force"
+  ansible.builtin.command:
+    argv:
+      - "{{ chezmoi_bin }}"
+      - update
+      - --force
   when:
     - chezmoi_repo.stat.exists
     - op_auth_status.rc == 0
   register: chezmoi_update_result
-  changed_when: "'Updated' in chezmoi_update_result.stdout or chezmoi_update_result.stdout | length > 0"
-  failed_when: false
+  changed_when:
+    - (chezmoi_status_result.stdout | default('') | length > 0) or
+      ((chezmoi_upstream_result.rc | default(1)) == 0 and
+      (chezmoi_head_result.stdout | default('')) != (chezmoi_upstream_result.stdout | default('')))
 
 - name: 更新結果を表示
   ansible.builtin.debug:

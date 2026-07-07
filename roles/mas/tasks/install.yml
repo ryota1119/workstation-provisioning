@@ -1,12 +1,23 @@
 ---
+- name: App Store未ログインによりMASインストールをスキップ
+  ansible.builtin.debug:
+    msg: |
+      ⏭️  App Storeにログインしていないため、Mac App Storeアプリのインストールをスキップしました。
+      App Storeアプリでログイン後、再実行してください。
+  when: mas_list_result.rc != 0
+
 - name: Mac App Storeアプリをインストール
   ansible.builtin.command: "{{ mas_bin }} install {{ item.id }}"
   loop: "{{ mas_apps | default([]) }}"
   loop_control:
     label: "{{ item.name }} ({{ item.id }})"
   register: mas_install_result
-  ignore_errors: true
   changed_when: "'Installed' in mas_install_result.stdout"
+  failed_when:
+    - mas_install_result.rc != 0
+    - "'already installed' not in (mas_install_result.stderr | default('') | lower)"
+    - "'already installed' not in (mas_install_result.stdout | default('') | lower)"
+  when: mas_list_result.rc == 0
 
 - name: インストール失敗したアプリを報告
   ansible.builtin.debug:

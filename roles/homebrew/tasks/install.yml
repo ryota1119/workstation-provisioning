@@ -27,7 +27,7 @@
   community.general.homebrew:
     name: "{{ item }}"
     state: present
-  loop: "{{ (brew_formula | default([], true)) + (brew_formula_extra | default([], true)) }}"
+  loop: "{{ brew_formula_all | default([], true) }}"
   loop_control:
     label: "{{ item }}"
 
@@ -36,14 +36,14 @@
   register: installed_casks
   changed_when: false
   failed_when: false
-  when: ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | length > 0
+  when: ((brew_casks_normal_all | default([], true)) + (brew_casks_sudo_required_all | default([], true))) | length > 0
 
 - name: Caskアプリケーション（通常）をインストール
   community.general.homebrew_cask:
     name: "{{ item }}"
     state: present
-  loop: "{{ ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | difference(installed_casks.stdout_lines | default([], true)) }}"
-  when: ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | length > 0
+  loop: "{{ (brew_casks_normal_all | default([], true)) | difference(installed_casks.stdout_lines | default([], true)) }}"
+  when: (brew_casks_normal_all | default([], true)) | length > 0
   register: cask_install_result
   failed_when:
     - cask_install_result is failed
@@ -55,5 +55,7 @@
   ansible.builtin.debug:
     msg: |
       以下のCaskはrootパスワードが必要なため、手動インストールが必要です：
-      brew install --cask {{ ((brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true))) | join(' ') }}
-  when: ((brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true))) | length > 0
+      brew install --cask {{ brew_casks_sudo_required_missing | join(' ') }}
+  vars:
+    brew_casks_sudo_required_missing: "{{ (brew_casks_sudo_required_all | default([], true)) | difference(installed_casks.stdout_lines | default([], true)) }}"
+  when: brew_casks_sudo_required_missing | length > 0
