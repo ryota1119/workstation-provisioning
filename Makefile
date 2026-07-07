@@ -1,4 +1,9 @@
 SHELL := /bin/zsh
+PYTHON_VERSION := $(shell awk -F'"' '/^python =/ { print $$2; exit }' mise.toml)
+MISE_EXEC := mise exec python@$(PYTHON_VERSION) --
+ANSIBLE_PLAYBOOK := $(MISE_EXEC) ansible-playbook
+ANSIBLE_GALAXY := $(MISE_EXEC) ansible-galaxy
+export PATH := /opt/homebrew/bin:/opt/homebrew/sbin:$(HOME)/.local/share/mise/shims:$(PATH)
 
 .PHONY: help
 help:
@@ -26,7 +31,7 @@ help:
 	@echo "  clean               - 一時ファイルのクリーンアップ"
 
 # ============================================================
-# Main Targets
+# メインターゲット
 # ============================================================
 
 .PHONY: all
@@ -35,31 +40,31 @@ all: mac-bootstrap install-deps provision
 .PHONY: provision
 provision:
 	@echo "Running full provisioning (install)..."
-	@ansible-playbook site.yml --tags "install"
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "install"
 
 .PHONY: upgrade
 upgrade:
 	@echo "Upgrading packages and dotfiles..."
-	@ansible-playbook site.yml --tags "upgrade"
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "upgrade"
 
 # ============================================================
-# Individual Roles
+# 個別ロール
 # ============================================================
 
 .PHONY: homebrew
 homebrew:
 	@echo "Running homebrew role..."
-	@ansible-playbook site.yml --tags "homebrew"
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "homebrew"
 
 .PHONY: mas
 mas:
 	@echo "Running mas role..."
-	@ansible-playbook site.yml --tags "mas"
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "mas"
 
 .PHONY: mise
 mise:
 	@echo "Running mise role..."
-	@ansible-playbook site.yml --tags "mise"
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "mise"
 
 .PHONY: mise-prune
 mise-prune:
@@ -72,36 +77,39 @@ mise-prune-apply:
 .PHONY: chezmoi
 chezmoi:
 	@echo "Running chezmoi role..."
-	@ansible-playbook site.yml --tags "chezmoi"
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "chezmoi"
 
 .PHONY: mac-setting
 mac-setting:
 	@echo "Running mac-setting role..."
-	@ansible-playbook site.yml --tags "mac-setting"
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "mac-setting"
 
 # ============================================================
-# Bootstrap & Utilities
+# ブートストラップとユーティリティ
 # ============================================================
 
 .PHONY: mac-bootstrap
 mac-bootstrap:
 	@echo "Running mac bootstrap script..."
-	@sh ./scripts/mac-bootstrap.sh
+	@bash ./scripts/mac-bootstrap.sh
 
 .PHONY: install-deps
 install-deps:
 	@echo "Installing Ansible collections..."
-	@ansible-galaxy collection install -r requirements.yml
+	@$(ANSIBLE_GALAXY) collection install -r requirements.yml
 
 .PHONY: doctor
 doctor:
-	@command -v brew >/dev/null 2>&1 || echo "⚠️  Homebrew未導入（make mac-bootstrap で導入）"
-	@command -v ansible >/dev/null 2>&1 || echo "⚠️  Ansible未導入（make mac-bootstrap で導入）"
+	@missing=0; \
+	command -v brew >/dev/null 2>&1 || { echo "⚠️  Homebrew未導入（make mac-bootstrap で導入）"; missing=1; }; \
+	command -v mise >/dev/null 2>&1 || { echo "⚠️  mise未導入（make mac-bootstrap で導入）"; missing=1; }; \
+	$(ANSIBLE_PLAYBOOK) --version >/dev/null 2>&1 || { echo "⚠️  Ansible未導入（make mac-bootstrap で導入）"; missing=1; }; \
+	exit $$missing
 
 .PHONY: check
 check:
 	@echo "Checking Ansible syntax..."
-	@ansible-playbook site.yml --syntax-check
+	@$(ANSIBLE_PLAYBOOK) site.yml --syntax-check
 
 .PHONY: clean
 clean:

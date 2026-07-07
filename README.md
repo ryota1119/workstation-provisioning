@@ -81,7 +81,7 @@ make all
 | `make homebrew` | Homebrewパッケージ（Formula + Cask）のインストール |
 | `make mas` | Mac App Storeアプリのインストール |
 | `make mise` | miseで言語ランタイムをインストール |
-| `make chezmoi` | dotfilesの初期化・更新・適用 |
+| `make chezmoi` | dotfilesの初期化・適用（updateは含まない） |
 | `make mac-setting` | macOSシステム設定の適用 |
 
 ### ブートストラップ・ユーティリティ
@@ -126,9 +126,16 @@ workstation-provisioning/
 │   │   ├── init.yml             # リポジトリ初期化（初回のみ）
 │   │   ├── update.yml           # git pull相当（chezmoi update）
 │   │   └── apply.yml            # ローカル適用（chezmoi apply）
-│   └── mac-setting/tasks/
-│       ├── main.yml
-│       └── defaults.yml         # macOSシステム設定
+│   └── mac-setting/
+│       ├── tasks/
+│       │   ├── main.yml
+│       │   └── defaults.yml     # macOSシステム設定
+│       └── handlers/
+│           └── main.yml         # 設定変更時だけ関連プロセスを再起動
+├── settings/
+│   ├── iStat Menus Settings.ismp7
+│   ├── iTerm2 State.itermexport
+│   └── RectangleConfig.json
 └── scripts/
     └── mac-bootstrap.sh         # 初回ブートストラップスクリプト
 ```
@@ -137,17 +144,21 @@ workstation-provisioning/
 
 playbook 全体は2つのトップレベルタグと、ロール個別タグで制御できます。
 
-| タグ | 含まれるロール | 用途 |
-|---|---|---|
-| `install` | homebrew, mas, mise, chezmoi(init+apply), mac-setting | 初回インストール（`make provision`） |
-| `upgrade` | homebrew, mas, chezmoi(update+apply) | 日常更新（`make upgrade`） |
-| `homebrew` / `mas` / `mise` / `chezmoi` / `mac-setting` | 該当ロールのみ | 個別ロール実行 |
+| タグ | Homebrew | MAS | mise | chezmoi | mac-setting | 用途 |
+|---|---|---|---|---|---|---|
+| `install` | install | install | install | init + apply | defaults | 初回インストール（`make provision`） |
+| `upgrade` | upgrade | upgrade | - | update + apply | - | 日常更新（`make upgrade`） |
+| `homebrew` | install | - | - | - | - | Homebrewのみ |
+| `mas` | - | install | - | - | - | MASのみ |
+| `mise` | - | - | install | - | - | miseのみ |
+| `chezmoi` | - | - | - | init + apply | - | chezmoiのみ。updateは実行しない |
+| `mac-setting` | - | - | - | - | defaults | macOS設定のみ |
 
 ポイント:
 
-- **mise** は `latest` を初回のみ導入する仕様のため、`upgrade` には含まれません
+- **mise** は明示バージョンを初回のみ導入する仕様のため、`upgrade` には含まれません
 - **mac-setting** は Finder/Dock の再起動が走るため、`upgrade` には含まれません
-- **chezmoi** は `install` 時は init+apply、`upgrade` 時は update+apply と、状況に応じた処理を実行します
+- **chezmoi** は `install` 時は init+apply、`upgrade` 時は update+apply です。個別の `chezmoi` タグでは update は実行されません
 
 ## 🔧 設定ファイル
 
@@ -183,7 +194,7 @@ mas_apps:
 
 # miseで管理する言語ランタイム
 mise_tools_versions:
-  - { name: "node", version: "latest" }
+  - { name: "node", version: "24.3.0" }
   ...
 
 # Mac App Store アプリのインストール（host_varsで上書き可能）
@@ -273,7 +284,17 @@ chezmoiは複数マシン間でdotfilesを管理するためのツールです�
 |---|---|
 | `make provision`（install タグ） | `init`（リポジトリclone）+ `apply`（ローカル適用） |
 | `make upgrade`（upgrade タグ） | `update`（git pull）+ `apply`（ローカル適用） |
-| `make chezmoi` | 上記すべて（init + update + apply） |
+| `make chezmoi` | `init`（未初期化時のみ）+ `apply`（updateは含まない） |
+
+## ⚙️ 手動適用が必要なアプリ設定
+
+`settings/` 配下のファイルは、アプリごとのエクスポート設定です。自動適用はせず、アプリ側のインポート機能から手動で取り込みます。
+
+| ファイル | 用途 | 手動適用手順 |
+|---|---|---|
+| `settings/iStat Menus Settings.ismp7` | iStat Menusの表示項目・メニューバー設定 | iStat Menusを開き、設定画面のインポート機能からこのファイルを選択 |
+| `settings/iTerm2 State.itermexport` | iTerm2のプロファイル・外観・キーバインド等 | iTerm2の Settings → General → Settings からインポート |
+| `settings/RectangleConfig.json` | Rectangleのウィンドウ操作ショートカット | Rectangleの設定画面からImportを選び、このJSONを指定 |
 
 ### 1Password CLIとの連携
 

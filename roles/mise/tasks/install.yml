@@ -1,13 +1,46 @@
 ---
 - name: 指定バージョンをインストール
-  ansible.builtin.shell: "{{ mise_bin }} use --global {{ item.name }}@{{ item.version }}"
+  ansible.builtin.command:
+    argv:
+      - "{{ mise_bin }}"
+      - install
+      - "{{ item.name }}@{{ item.version }}"
   loop: "{{ mise_tools_versions | default([]) }}"
   loop_control:
     label: "{{ item.name }}@{{ item.version }}"
   register: mise_install_result
   changed_when: "'Installing' in mise_install_result.stderr or 'installed' in mise_install_result.stderr"
+
+- name: グローバル設定済みバージョンを確認
+  ansible.builtin.command:
+    argv:
+      - "{{ mise_bin }}"
+      - current
+      - "{{ item.name }}"
+  loop: "{{ mise_tools_versions | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: mise_current_result
+  changed_when: false
   failed_when: false
 
+- name: 指定バージョンをグローバルに設定
+  ansible.builtin.command:
+    argv:
+      - "{{ mise_bin }}"
+      - use
+      - --global
+      - "{{ item.item.name }}@{{ item.item.version }}"
+  loop: "{{ mise_current_result.results | default([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}@{{ item.item.version }}"
+  when: item.rc != 0 or (item.stdout | regex_search('(^|\\s)' ~ (item.item.version | regex_escape) ~ '(\\s|$)')) is none
+  register: mise_global_result
+  changed_when: true
+
 - name: mise shimsを更新
-  ansible.builtin.shell: "{{ mise_bin }} reshim"
+  ansible.builtin.command:
+    argv:
+      - "{{ mise_bin }}"
+      - reshim
   changed_when: false

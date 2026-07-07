@@ -129,17 +129,17 @@ mas_apps:
 
 # miseツールバージョン
 mise_tools_versions:
-  - { name: "go", version: "latest" }
-  - { name: "mysql", version: "latest" }
-  - { name: "node", version: "latest" }
-  - { name: "php", version: "latest" }
-  - { name: "pnpm", version: "latest" }
-  - { name: "python", version: "latest" }
-  - { name: "uv", version: "latest" }
-  - { name: "ruby", version: "latest" }
-  - { name: "terraform", version: "latest" }
-  - { name: "terragrunt", version: "latest" }
-  - { name: "yarn", version: "latest" }
+  - { name: "go", version: "1.24.4" }
+  - { name: "mysql", version: "8.4.5" }
+  - { name: "node", version: "24.3.0" }
+  - { name: "php", version: "8.4.8" }
+  - { name: "pnpm", version: "10.12.4" }
+  - { name: "python", version: "3.13.7" }
+  - { name: "uv", version: "0.7.13" }
+  - { name: "ruby", version: "3.4.4" }
+  - { name: "terraform", version: "1.12.2" }
+  - { name: "terragrunt", version: "0.80.4" }
+  - { name: "yarn", version: "1.22.22" }
 
 # Mac App Store アプリのインストール（true: 有効 / false: 無効）
 # host_vars/{ホスト名}.yml で上書き可能

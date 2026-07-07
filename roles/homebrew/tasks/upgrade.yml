@@ -7,10 +7,9 @@
 
 - name: Formulaパッケージをアップグレード
   ansible.builtin.command: "{{ brew_bin }} upgrade --formula {{ item }}"
-  loop: "{{ outdated_formulas.stdout_lines | default([], true) }}"
+  loop: "{{ (outdated_formulas.stdout_lines | default([], true)) | select('in', brew_formula_all | default([], true)) | list }}"
   loop_control:
     label: "{{ item }}"
-  when: (outdated_formulas.stdout_lines | default([], true)) | length > 0
   changed_when: true
 
 - name: 更新可能なCaskパッケージを取得
@@ -22,15 +21,10 @@
 - name: Caskパッケージのアップグレード処理
   when: (outdated_casks_all.stdout_lines | default([], true)) | length > 0
   block:
-    - name: 更新可能なCaskパッケージを分類（base + extra を考慮）
-      ansible.builtin.set_fact:
-        casks_normal_all: "{{ (brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true)) }}"
-        casks_sudo_all: "{{ (brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true)) }}"
-
     - name: 更新対象のCaskを抽出
       ansible.builtin.set_fact:
-        outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', casks_normal_all) | list }}"
-        outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', casks_sudo_all) | list }}"
+        outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_normal_all | default([], true)) | list }}"
+        outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_sudo_required_all | default([], true)) | list }}"
 
     - name: 通常のCaskパッケージをアップグレード
       ansible.builtin.command: "{{ brew_bin }} upgrade --cask {{ item }} --greedy"
@@ -39,8 +33,11 @@
         label: "{{ item }}"
       when: outdated_casks_normal | length > 0
       changed_when: true
-      failed_when: false
       register: cask_upgrade_results
+      failed_when:
+        - cask_upgrade_results.rc != 0
+        - "'It seems there is already an App at' not in (cask_upgrade_results.stderr | default(''))"
+        - "'It seems there is already an App at' not in (cask_upgrade_results.stdout | default(''))"
 
     - name: アップグレード失敗したCaskを強制再インストール（古いバージョンが残存している場合の対応）
       ansible.builtin.command: "{{ brew_bin }} reinstall --cask {{ item.item }}"
