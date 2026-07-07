@@ -27,6 +27,7 @@ htmlcov/
 .env
 .env.local
 inventory.ini
+.tool-versions
 
 # 一時ファイルとログ
 *.tmp
