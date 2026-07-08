@@ -9,6 +9,7 @@ mise_bin: "{{ homebrew_prefix }}/bin/mise"
 # Tapリポジトリ
 brew_taps:
   - ray-on-code/tap
+  - xdevplatform/tap
 
 # Formulaパッケージ
 brew_formula:
@@ -111,6 +112,7 @@ brew_casks_normal:
   - rectangle
   - setapp
   - superset
+  - xdevplatform/tap/xurl
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
