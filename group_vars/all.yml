@@ -102,7 +102,6 @@ brew_casks_normal:
   - ghostty
   - google-chrome
   - google-gemini
-  - jordanbaird-ice@beta
   - keka
   - kekaexternalhelper
   - monitorcontrol
