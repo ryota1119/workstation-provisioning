@@ -3,7 +3,6 @@
 homebrew_prefix: /opt/homebrew
 brew_bin: "{{ homebrew_prefix }}/bin/brew"
 mas_bin: "{{ homebrew_prefix }}/bin/mas"
-chezmoi_bin: "{{ homebrew_prefix }}/bin/chezmoi"
 mise_bin: "{{ homebrew_prefix }}/bin/mise"
 
 # Tapリポジトリ
@@ -145,6 +144,3 @@ mise_tools_versions:
 # Mac App Store アプリのインストール（true: 有効 / false: 無効）
 # host_vars/{ホスト名}.yml で上書き可能
 enable_mas: true
-
-# dotfilesリポジトリのURL
-chezmoi_repo_url: "git@github.com:ryota1119/dotfiles.git"

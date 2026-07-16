@@ -20,7 +20,3 @@
     # 4. macOSシステム設定
     - role: mac-setting
       when: ansible_os_family == 'Darwin'
-
-    # 5. chezmoi: 全ツール導入後に dotfiles を適用
-    - role: chezmoi
-      when: ansible_os_family == 'Darwin'

@@ -11,7 +11,7 @@ help:
 	@echo ""
 	@echo "Main Targets:"
 	@echo "  all                 - 新規PC初回セットアップ（mac-bootstrap + install-deps + provision）"
-	@echo "  provision           - 全ロールを一括インストール（--tags install）"
+	@echo "  provision           - 全ロールのインストール後、dotfilesを初期化・適用"
 	@echo "  upgrade             - パッケージとdotfilesを一括更新（--tags upgrade）"
 	@echo ""
 	@echo "Individual Roles:"
@@ -20,7 +20,7 @@ help:
 	@echo "  mise                - miseでツールバージョンをインストール"
 	@echo "  mise-prune          - 未使用かつ同一ツールに複数あるmiseのバージョンを削除（dry-run）"
 	@echo "  mise-prune-apply    - 上記を実際に削除（対話確認あり）"
-	@echo "  chezmoi             - chezmoiのセットアップ（dotfiles管理）"
+	@echo "  chezmoi             - chezmoiを初期化してdotfilesを適用"
 	@echo "  mac-setting         - macOSシステム設定の適用"
 	@echo ""
 	@echo "Bootstrap & Utilities:"
@@ -41,11 +41,15 @@ all: mac-bootstrap install-deps provision
 provision:
 	@echo "Running full provisioning (install)..."
 	@$(ANSIBLE_PLAYBOOK) site.yml --tags "install"
+	@$(MAKE) chezmoi-init
+	@$(MAKE) chezmoi-apply
 
 .PHONY: upgrade
 upgrade:
 	@echo "Upgrading packages and dotfiles..."
 	@$(ANSIBLE_PLAYBOOK) site.yml --tags "upgrade"
+	@$(MAKE) chezmoi-upgrade
+	@$(MAKE) chezmoi-apply
 
 # ============================================================
 # 個別ロール
@@ -76,8 +80,20 @@ mise-prune-apply:
 
 .PHONY: chezmoi
 chezmoi:
-	@echo "Running chezmoi role..."
-	@$(ANSIBLE_PLAYBOOK) site.yml --tags "chezmoi"
+	@echo "Running chezmoi script..."
+	@bash ./scripts/chezmoi.sh
+
+.PHONY: chezmoi-init
+chezmoi-init:
+	@bash ./scripts/chezmoi.sh init
+
+.PHONY: chezmoi-upgrade
+chezmoi-upgrade:
+	@bash ./scripts/chezmoi.sh upgrade
+
+.PHONY: chezmoi-apply
+chezmoi-apply:
+	@bash ./scripts/chezmoi.sh apply
 
 .PHONY: mac-setting
 mac-setting:

@@ -10,13 +10,13 @@ Ansible-based macOS provisioning project. Manages Homebrew packages, Mac App Sto
 
 ```bash
 make all            # New machine: mac-bootstrap + install-deps + provision
-make provision      # Install all roles (--tags install)
-make upgrade        # Daily update: Homebrew + MAS + chezmoi (--tags upgrade)
+make provision      # Install all roles, then initialize and apply dotfiles
+make upgrade        # Daily update: Homebrew + MAS, then update and apply dotfiles
 
 make homebrew       # Run only the homebrew role
 make mas            # Run only the mas role
 make mise           # Run only the mise role
-make chezmoi        # Run only the chezmoi role (init + update + apply)
+make chezmoi        # Run the chezmoi script (init + apply)
 make mac-setting    # Run only the mac-setting role
 
 make check          # Ansible syntax check
@@ -29,13 +29,14 @@ make mise-prune-apply   # Interactive: delete unused mise versions
 
 ## Architecture
 
-The playbook (`site.yml`) runs five roles in dependency order:
+The playbook (`site.yml`) runs four roles in dependency order. Chezmoi is managed separately by `scripts/chezmoi.sh`, invoked through the Makefile after Ansible completes:
 
 1. **homebrew** — Installs Formula and Cask packages. Casks requiring sudo are printed as manual instructions rather than installed automatically.
 2. **mas** — Mac App Store installs via `mas` CLI. Can be disabled per-machine with `enable_mas: false`.
 3. **mise** — Language runtime installs (Node, Python, PHP, Go, etc.). Only runs on `install` tag, never on `upgrade` (to avoid unexpected upgrades).
 4. **mac-setting** — Applies `defaults write` macOS system settings. Only runs on `install` tag, not `upgrade` (triggers Finder/Dock restart).
-5. **chezmoi** — Dotfiles management. On `install`: `init` + `apply`. On `upgrade`: `update` + `apply`. Silently skips if 1Password CLI is not authenticated.
+
+**chezmoi** — Dotfiles management outside Ansible. `make provision` runs `init` + `apply`; `make upgrade` runs `upgrade` + `apply`; and `make chezmoi` runs `init` + `apply`. Update/apply skip successfully if 1Password CLI is not authenticated.
 
 ### Variable layering
 
@@ -54,9 +55,11 @@ Package lists are merged: `brew_formula` + `brew_formula_extra`, `brew_casks_nor
 
 | Tag | Roles included |
 |-----|----------------|
-| `install` | homebrew, mas, mise, chezmoi (init+apply), mac-setting |
-| `upgrade` | homebrew, mas, chezmoi (update+apply) |
-| `homebrew` / `mas` / `mise` / `chezmoi` / `mac-setting` | individual role only |
+| `install` | homebrew, mas, mise, mac-setting |
+| `upgrade` | homebrew, mas |
+| `homebrew` / `mas` / `mise` / `mac-setting` | individual role only |
+
+Chezmoi is not an Ansible tag. Use the Makefile targets described above.
 
 ### inventory.ini
 
