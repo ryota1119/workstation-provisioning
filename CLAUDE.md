@@ -11,7 +11,7 @@ Ansible-based macOS provisioning project. Manages Homebrew packages, Mac App Sto
 ```bash
 make all            # New machine: mac-bootstrap + install-deps + provision
 make provision      # Install all roles, then initialize and apply dotfiles
-make upgrade        # Daily update: Homebrew + MAS, then update and apply dotfiles
+make upgrade        # Daily update: Homebrew + MAS only (chezmoi is not run)
 
 make homebrew       # Run only the homebrew role
 make mas            # Run only the mas role
@@ -36,7 +36,7 @@ The playbook (`site.yml`) runs four roles in dependency order. Chezmoi is manage
 3. **mise** — Language runtime installs (Node, Python, PHP, Go, etc.). Only runs on `install` tag, never on `upgrade` (to avoid unexpected upgrades).
 4. **mac-setting** — Applies `defaults write` macOS system settings. Only runs on `install` tag, not `upgrade` (triggers Finder/Dock restart).
 
-**chezmoi** — Dotfiles management outside Ansible. `make provision` runs `init` + `apply`; `make upgrade` runs `upgrade` + `apply`; and `make chezmoi` runs `init` + `apply`. Update/apply skip successfully if 1Password CLI is not authenticated.
+**chezmoi** — Dotfiles management outside Ansible. `make provision` runs `init` + `apply`; `make chezmoi` runs `init` + `apply`. `make upgrade` does NOT touch chezmoi (dotfiles are only initialized/applied during provisioning). `chezmoi-init`/`chezmoi-upgrade`/`chezmoi-apply` targets remain available for manual use. Init/apply skip successfully if 1Password CLI is not authenticated.
 
 ### Variable layering
 

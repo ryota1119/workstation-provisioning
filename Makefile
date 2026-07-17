@@ -46,10 +46,8 @@ provision:
 
 .PHONY: upgrade
 upgrade:
-	@echo "Upgrading packages and dotfiles..."
+	@echo "Upgrading packages..."
 	@$(ANSIBLE_PLAYBOOK) site.yml --tags "upgrade"
-	@$(MAKE) chezmoi-upgrade
-	@$(MAKE) chezmoi-apply
 
 # ============================================================
 # 個別ロール
