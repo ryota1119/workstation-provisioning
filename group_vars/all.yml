@@ -87,6 +87,7 @@ brew_casks_normal:
   - 1password-cli
   - alfred
   - alt-tab
+  - bettertouchtool
   - claude
   - claude-code
   - codex
@@ -129,16 +130,16 @@ mas_apps:
 
 # miseツールバージョン
 mise_tools_versions:
-  - { name: "go", version: "1.24.4" }
-  - { name: "mysql", version: "8.4.5" }
-  - { name: "node", version: "24.3.0" }
-  - { name: "php", version: "8.4.8" }
-  - { name: "pnpm", version: "10.12.4" }
-  - { name: "python", version: "3.13.7" }
-  - { name: "uv", version: "0.7.13" }
-  - { name: "ruby", version: "3.4.4" }
-  - { name: "terraform", version: "1.12.2" }
-  - { name: "terragrunt", version: "0.80.4" }
+  - { name: "go", version: "1.26.5" }
+  - { name: "mysql", version: "8.0.34" }
+  - { name: "node", version: "24.18.0" }
+  - { name: "php", version: "8.5.8" }
+  - { name: "pnpm", version: "11.13.1" }
+  - { name: "python", version: "3.14.6" }
+  - { name: "uv", version: "0.11.29" }
+  - { name: "ruby", version: "4.0.6" }
+  - { name: "terraform", version: "1.15.8" }
+  - { name: "terragrunt", version: "1.1.1" }
   - { name: "yarn", version: "1.22.22" }
 
 # Mac App Store アプリのインストール（true: 有効 / false: 無効）
