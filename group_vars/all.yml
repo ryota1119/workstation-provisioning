@@ -92,7 +92,6 @@ brew_casks_normal:
   - claude-code
   - codex
   - codex-app
-  - cursor
   - chatgpt
   - firefox
   - figma
@@ -115,6 +114,7 @@ brew_casks_normal:
 
 # Caskアプリケーション（sudo必要）
 brew_casks_sudo_required:
+  - cursor
   - docker-desktop
   - google-drive
   - keyboardcleantool
