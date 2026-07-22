@@ -21,6 +21,8 @@ help:
 	@echo "  mise-prune          - 未使用かつ同一ツールに複数あるmiseのバージョンを削除（dry-run）"
 	@echo "  mise-prune-apply    - 上記を実際に削除（対話確認あり）"
 	@echo "  chezmoi             - chezmoiを初期化してdotfilesを適用"
+	@echo "  chezmoi-config      - chezmoi.tomlの事前生成のみ(1Password対話プロンプト回避)"
+	@echo "  workspace           - workspace-base(~/Workspace)のclone/更新のみ"
 	@echo "  mac-setting         - macOSシステム設定の適用"
 	@echo ""
 	@echo "Bootstrap & Utilities:"
@@ -92,6 +94,16 @@ chezmoi-upgrade:
 .PHONY: chezmoi-apply
 chezmoi-apply:
 	@bash ./scripts/chezmoi.sh apply
+
+.PHONY: chezmoi-config
+chezmoi-config:
+	@echo "Running chezmoi-config role..."
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "chezmoi-config"
+
+.PHONY: workspace
+workspace:
+	@echo "Running workspace role..."
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "workspace"
 
 .PHONY: mac-setting
 mac-setting:
