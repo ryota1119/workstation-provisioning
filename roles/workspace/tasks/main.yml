@@ -1,0 +1,12 @@
+---
+- name: workspace-baseをclone/更新
+  ansible.builtin.git:
+    repo: "{{ workspace_base_repo_url }}"
+    dest: "{{ workspace_dest }}"
+    version: main
+    update: true
+    force: false
+  tags:
+    - install
+    - upgrade
+    - workspace

@@ -24,3 +24,6 @@
     # 5. chezmoi設定の事前生成: chezmoi init時の1Password対話プロンプトを回避する
     - role: chezmoi-config
       when: ansible_os_family == 'Darwin'
+
+    # 6. workspace-base: ~/Workspaceの基盤リポジトリをclone/更新（他ロールに依存しない）
+    - role: workspace

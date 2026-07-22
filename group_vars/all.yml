@@ -154,3 +154,7 @@ chezmoi_git_identity:
   onepassword_username_path: "op://Personal/GitHub - ryota1119/username"
   onepassword_email_path: "op://Personal/GitHub - ryota1119/email"
   onepassword_signing_key_path: "op://Personal/id_ed25519/public_key"
+
+# workspace-base（~/Workspaceの基盤リポジトリ）のclone先・URL
+workspace_base_repo_url: "git@github.com:ryota1119/workspace-base.git"
+workspace_dest: "{{ ansible_env.HOME }}/Workspace"
