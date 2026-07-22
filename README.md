@@ -38,19 +38,19 @@ macOS環境のセットアップと管理を自動化するAnsibleプロジェ�
         ├─ mas             … Mac App Store
         ├─ mise            … 言語ランタイム
         ├─ mac-setting     … macOSシステム設定
-        ├─ chezmoi-config  … chezmoi.tomlを事前生成（1Password参照先。会社PCならhost_vars/{ホスト名}/chezmoi.local.ymlで上書き）
-        ├─ workspace       … workspace-base（~/Workspaceの基盤リポジトリ）をclone
-        ├─ chezmoi-init    … dotfilesリポジトリをclone（scripts/chezmoi.sh init）
-        └─ chezmoi-apply   … dotfilesを適用（scripts/chezmoi.sh apply）
+        ├─ chezmoi-config-bootstrap … chezmoi.tomlを事前生成（1Password参照先。会社PCならhost_vars/{ホスト名}/chezmoi.local.ymlで上書き）
+        ├─ workspace-base           … workspace-baseリポジトリを~/Workspaceへclone
+        ├─ chezmoi-init             … dotfilesリポジトリをclone（scripts/chezmoi.sh init）
+        └─ chezmoi-apply            … dotfilesを適用（scripts/chezmoi.sh apply）
 6. （日常）make upgrade
-        └─ site.yml --tags upgrade … homebrew/mas/workspaceの更新。chezmoiは含まれない（後述）
+        └─ site.yml --tags upgrade … homebrew/mas/workspace-baseの更新。chezmoiは含まれない（後述）
 ```
 
 ポイント：
 
-- **`chezmoi-config`ロードが`chezmoi-init`より先に走る**ことで、`chezmoi init`実行時の1Password参照先プロンプトが発生しない（`~/.config/chezmoi/chezmoi.toml`が事前に存在するため）。値そのものは`group_vars/all.yml`（個人用デフォルト）または`host_vars/{ホスト名}/chezmoi.local.yml`（gitignore対象、会社PC等の上書き）から来る。
+- **`chezmoi-config-bootstrap`ロールが`chezmoi-init`より先に走る**ことで、`chezmoi init`実行時の1Password参照先プロンプトが発生しない（`~/.config/chezmoi/chezmoi.toml`が事前に存在するため）。値そのものは`group_vars/all.yml`（個人用デフォルト）または`host_vars/{ホスト名}/chezmoi.local.yml`（gitignore対象、会社PC等の上書き）から来る。
 - **`make upgrade`にchezmoiは含まれない。** dotfilesを最新化したい場合は個別に`make chezmoi-upgrade`を実行する（対話プロンプトの問題が解決したので再統合も検討可能）。
-- **`workspace`ロールは`install`/`upgrade`両方に含まれる。** `~/Workspace`が既に存在する場合は`ansible.builtin.git`が検知して無変更（新規PCではclone）。ここでcloneされるのは`.claude/skills/`とCLAUDE.mdの基盤（`workspace-base`）のみで、`repos/`・`sandbox/`配下の個別プロジェクトや`exocortex`（Google Drive同期）はこのロールの対象外（各々を`gh`/`ghq`/`ghs`で別途復元、Google Driveは事前にサインイン・同期完了が前提）。
+- **`workspace-base`ロールは`install`/`upgrade`両方に含まれる。** `~/Workspace`が既に存在する場合は`ansible.builtin.git`が検知して無変更（新規PCではclone）。ここでcloneされるのは`.claude/skills/`とCLAUDE.mdの基盤（`workspace-base`リポジトリ）のみで、`repos/`・`sandbox/`配下の個別プロジェクトや`exocortex`（Google Drive同期）はこのロールの対象外（各々を`gh`/`ghq`/`ghs`で別途復元、Google Driveは事前にサインイン・同期完了が前提）。
 - 1Password自体のサインイン・アンロックと、Google Drive等の外部同期待ちは本質的に手動/時間依存のため自動化していない。
 
 ## 🛠️ 初回セットアップ
@@ -114,8 +114,8 @@ make all
 | `make mas` | Mac App Storeアプリのインストール |
 | `make mise` | miseで言語ランタイムをインストール |
 | `make chezmoi` | dotfilesの初期化・適用（updateは含まない） |
-| `make chezmoi-config` | chezmoi.tomlの事前生成のみ（1Password対話プロンプト回避） |
-| `make workspace` | workspace-base（`~/Workspace`）のclone/更新のみ |
+| `make chezmoi-config-bootstrap` | chezmoi.tomlの事前生成のみ（1Password対話プロンプト回避） |
+| `make workspace-base` | workspace-base（`~/Workspace`）のclone/更新のみ |
 | `make mac-setting` | macOSシステム設定の適用 |
 
 ### ブートストラップ・ユーティリティ
@@ -159,14 +159,14 @@ workstation-provisioning/
 │   ├── mise/tasks/
 │   │   ├── main.yml
 │   │   └── install.yml          # 初回のみインストール（upgradeなし）
-│   ├── chezmoi-config/
+│   ├── chezmoi-config-bootstrap/
 │   │   ├── tasks/
 │   │   │   ├── main.yml
 │   │   │   └── install.yml      # ~/.config/chezmoi/chezmoi.tomlを事前生成（既存ファイルは上書きしない）
 │   │   └── templates/
 │   │       └── chezmoi.toml.j2  # chezmoi_git_identity変数から生成
-│   ├── workspace/tasks/
-│   │   └── main.yml             # workspace-baseを~/Workspaceへclone/更新
+│   ├── workspace-base/tasks/
+│   │   └── main.yml             # workspace-baseリポジトリを~/Workspaceへclone/更新
 │   └── mac-setting/
 │       ├── tasks/
 │       │   ├── main.yml
@@ -182,30 +182,30 @@ workstation-provisioning/
     └── chezmoi.sh               # chezmoiのinit/update/apply処理（ansibleロールではなくbashスクリプト）
 ```
 
-chezmoi自体の`init`/`update`/`apply`はansibleのロール・タグではなく、`scripts/chezmoi.sh`（bash）が担っています。`site.yml`が担当するのは、その前段階である`chezmoi.toml`の事前生成（`chezmoi-config`ロール）のみです。
+chezmoi自体の`init`/`update`/`apply`はansibleのロール・タグではなく、`scripts/chezmoi.sh`（bash）が担っています。`site.yml`が担当するのは、その前段階である`chezmoi.toml`の事前生成（`chezmoi-config-bootstrap`ロール）のみです。
 
 ## 🏷️ Ansible Tagsの設計
 
 playbook 全体は2つのトップレベルタグと、ロール個別タグで制御できます（chezmoi自体の`init`/`update`/`apply`はansibleの外・`scripts/chezmoi.sh`が担当するため、この表には含まれません）。
 
-| タグ | Homebrew | MAS | mise | chezmoi-config | workspace | mac-setting | 用途 |
+| タグ | Homebrew | MAS | mise | chezmoi-config-bootstrap | workspace-base | mac-setting | 用途 |
 |---|---|---|---|---|---|---|---|
 | `install` | install | install | install | 実行 | clone/更新 | defaults | 初回インストール（`make provision`） |
 | `upgrade` | upgrade | upgrade | - | - | clone/更新 | - | 日常更新（`make upgrade`） |
 | `homebrew` | install | - | - | - | - | - | Homebrewのみ |
 | `mas` | - | install | - | - | - | - | MASのみ |
 | `mise` | - | - | install | - | - | - | miseのみ |
-| `chezmoi-config` | - | - | - | 実行 | - | - | chezmoi.tomlの事前生成のみ |
-| `workspace` | - | - | - | - | clone/更新 | - | workspace-baseのclone/更新のみ |
+| `chezmoi-config-bootstrap` | - | - | - | 実行 | - | - | chezmoi.tomlの事前生成のみ |
+| `workspace-base` | - | - | - | - | clone/更新 | - | workspace-baseのclone/更新のみ |
 | `mac-setting` | - | - | - | - | - | defaults | macOS設定のみ |
 
 ポイント:
 
 - **mise** は明示バージョンを初回のみ導入する仕様のため、`upgrade` には含まれません
 - **mac-setting** は Finder/Dock の再起動が走るため、`upgrade` には含まれません
-- **chezmoi-config** は `chezmoi.toml` を事前生成するだけで、`chezmoi init`/`apply`自体は呼びません（`force: false`のため既存ファイルは上書きしません）。`install`タグのみに含まれ、`upgrade`には含まれません
+- **chezmoi-config-bootstrap** は `chezmoi.toml` を事前生成するだけで、`chezmoi init`/`apply`自体は呼びません（`force: false`のため既存ファイルは上書きしません）。`install`タグのみに含まれ、`upgrade`には含まれません
 - chezmoi自体の実行（init/update/apply）は`Makefile`が`scripts/chezmoi.sh`を直接呼ぶことで行われ、`make provision`では実行されますが`make upgrade`では実行されません（後述）
-- **workspace** は`ansible.builtin.git`で`~/Workspace`をclone/更新するのみ。`install`/`upgrade`どちらのタグにも含まれます（基盤リポジトリなので日常的にも最新化したい）
+- **workspace-base** は`ansible.builtin.git`で`~/Workspace`をclone/更新するのみ。`install`/`upgrade`どちらのタグにも含まれます（基盤リポジトリなので日常的にも最新化したい）
 
 ## 🔧 設定ファイル
 
@@ -255,7 +255,7 @@ chezmoi_git_identity:
   onepassword_signing_key_path: "op://Personal/id_ed25519/public_key"
 ```
 
-dotfilesリポジトリ自体のURL（`git@github.com:ryota1119/dotfiles.git`）はansible変数ではなく、`scripts/chezmoi.sh`内に直接定義されています。`workspace_base_repo_url`/`workspace_dest`は`workspace`ロールが`~/Workspace`をclone/更新する際に使う変数です。
+dotfilesリポジトリ自体のURL（`git@github.com:ryota1119/dotfiles.git`）はansible変数ではなく、`scripts/chezmoi.sh`内に直接定義されています。`workspace_base_repo_url`/`workspace_dest`は`workspace-base`ロールが`~/Workspace`をclone/更新する際に使う変数です。
 
 ### `host_vars/{ホスト名}.yml` - マシン固有
 
@@ -343,7 +343,7 @@ chezmoiは複数マシン間でdotfilesを管理するためのツールです�
 
 | 実行コマンド | 動作 |
 |---|---|
-| `make provision` | ansible（`chezmoi-config`ロールでchezmoi.toml事前生成）→ `chezmoi-init` → `chezmoi-apply` |
+| `make provision` | ansible（`chezmoi-config-bootstrap`ロールでchezmoi.toml事前生成）→ `chezmoi-init` → `chezmoi-apply` |
 | `make upgrade` | 実行されない（homebrew/masのみ。dotfilesを更新したい場合は個別に`make chezmoi-upgrade`） |
 | `make chezmoi` | `init`（未初期化時のみ）+ `apply`（updateは含まない） |
 | `make chezmoi-init` | 未初期化の場合のみ`chezmoi init`（リポジトリclone） |
@@ -352,7 +352,7 @@ chezmoiは複数マシン間でdotfilesを管理するためのツールです�
 
 ### 1Password対話プロンプトの回避
 
-`.chezmoi.toml.tmpl`は`promptStringOnce`で1Passwordの参照先（アカウント・パス）を保持しますが、値が未設定だと対話入力を要求します。これが`make provision`の非対話実行を妨げていたため、`chezmoi-config`ロールが`chezmoi init`より先に`~/.config/chezmoi/chezmoi.toml`を`chezmoi_git_identity`変数から生成し、プロンプトを回避します（詳細は「🔄 プロビジョニングの全体フロー」参照）。
+`.chezmoi.toml.tmpl`は`promptStringOnce`で1Passwordの参照先（アカウント・パス）を保持しますが、値が未設定だと対話入力を要求します。これが`make provision`の非対話実行を妨げていたため、`chezmoi-config-bootstrap`ロールが`chezmoi init`より先に`~/.config/chezmoi/chezmoi.toml`を`chezmoi_git_identity`変数から生成し、プロンプトを回避します（詳細は「🔄 プロビジョニングの全体フロー」参照）。
 
 ## ⚙️ 手動適用が必要なアプリ設定
 
@@ -375,7 +375,7 @@ chezmoiのテンプレートファイル内で1Passwordのシークレットを�
     signingkey = {{ onepasswordRead .gitIdentity.onepasswordSigningKeyPath }}
 ```
 
-`.gitIdentity.*`の値は`chezmoi init`時に`~/.config/chezmoi/chezmoi.toml`から読み込まれます（本リポジトリの`chezmoi-config`ロールが事前生成する値、または過去に対話入力した値）。1Passwordは複数アカウント同時サインインをしない運用のため、`onepasswordRead`にaccount引数は渡しません（そのマシンでサインインしている唯一のアカウントが自動的に使われます）。
+`.gitIdentity.*`の値は`chezmoi init`時に`~/.config/chezmoi/chezmoi.toml`から読み込まれます（本リポジトリの`chezmoi-config-bootstrap`ロールが事前生成する値、または過去に対話入力した値）。1Passwordは複数アカウント同時サインインをしない運用のため、`onepasswordRead`にaccount引数は渡しません（そのマシンでサインインしている唯一のアカウントが自動的に使われます）。
 
 1Password CLIが未認証の場合、`update` / `apply` は**自動的にスキップ**されて警告が表示されます。
 

@@ -3,4 +3,4 @@
   ansible.builtin.import_tasks: install.yml
   tags:
     - install
-    - chezmoi-config
+    - chezmoi-config-bootstrap
