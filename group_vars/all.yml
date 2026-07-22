@@ -145,3 +145,12 @@ mise_tools_versions:
 # Mac App Store アプリのインストール（true: 有効 / false: 無効）
 # host_vars/{ホスト名}.yml で上書き可能
 enable_mas: true
+
+# chezmoiのgit identity設定（1Password参照先）。デフォルトは個人用。
+# 会社PC等で別の保管庫を参照する場合は、host_vars/{ホスト名}/chezmoi.local.yml
+# （gitignore対象・chezmoi.local.yml.exampleを参考に作成）で上書きする。
+chezmoi_git_identity:
+  onepassword_account: "my.1password.com"
+  onepassword_username_path: "op://Personal/GitHub - ryota1119/username"
+  onepassword_email_path: "op://Personal/GitHub - ryota1119/email"
+  onepassword_signing_key_path: "op://Personal/id_ed25519/public_key"

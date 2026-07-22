@@ -28,6 +28,7 @@ htmlcov/
 .env.local
 inventory.ini
 .tool-versions
+host_vars/*/chezmoi.local.yml
 
 # 一時ファイルとログ
 *.tmp

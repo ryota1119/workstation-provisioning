@@ -1,0 +1,6 @@
+---
+- name: chezmoi設定の事前生成処理
+  ansible.builtin.import_tasks: install.yml
+  tags:
+    - install
+    - chezmoi-config

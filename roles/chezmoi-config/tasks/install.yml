@@ -1,0 +1,13 @@
+---
+- name: "~/.config/chezmoi ディレクトリを作成"
+  ansible.builtin.file:
+    path: "{{ ansible_env.HOME }}/.config/chezmoi"
+    state: directory
+    mode: "0700"
+
+- name: chezmoi.tomlを事前生成（chezmoi initの対話プロンプトを回避）
+  ansible.builtin.template:
+    src: chezmoi.toml.j2
+    dest: "{{ ansible_env.HOME }}/.config/chezmoi/chezmoi.toml"
+    mode: "0600"
+    force: false
