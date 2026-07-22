@@ -104,7 +104,7 @@ make all
 |---|---|---|
 | `make all` | 新規PC初回セットアップ（bootstrap + deps + provision） | 初回のみ |
 | `make provision` | 全ロールを一括インストール | 稀 |
-| `make upgrade` | パッケージとdotfilesを一括更新 | 日常 |
+| `make upgrade` | Homebrew・MAS・workspaceを更新（dotfilesは含まない） | 日常 |
 
 ### 個別ロール（必要時のみ）
 
