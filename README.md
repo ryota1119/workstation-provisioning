@@ -250,7 +250,6 @@ enable_mas: true
 # chezmoiのgit identity設定（1Password参照先）。デフォルトは個人用。
 # 会社PC等で別の保管庫を使う場合は host_vars/{ホスト名}/chezmoi.local.yml で上書きする。
 chezmoi_git_identity:
-  onepassword_account: "my.1password.com"
   onepassword_username_path: "op://Personal/GitHub - ryota1119/username"
   onepassword_email_path: "op://Personal/GitHub - ryota1119/email"
   onepassword_signing_key_path: "op://Personal/id_ed25519/public_key"
@@ -371,12 +370,12 @@ chezmoiのテンプレートファイル内で1Passwordのシークレットを�
 
 ```toml
 [user]
-    name = {{ onepasswordRead .gitIdentity.onepasswordUsernamePath .gitIdentity.onepasswordAccount }}
-    email = {{ onepasswordRead .gitIdentity.onepasswordEmailPath .gitIdentity.onepasswordAccount }}
-    signingkey = {{ onepasswordRead .gitIdentity.onepasswordSigningKeyPath .gitIdentity.onepasswordAccount }}
+    name = {{ onepasswordRead .gitIdentity.onepasswordUsernamePath }}
+    email = {{ onepasswordRead .gitIdentity.onepasswordEmailPath }}
+    signingkey = {{ onepasswordRead .gitIdentity.onepasswordSigningKeyPath }}
 ```
 
-`.gitIdentity.*`の値は`chezmoi init`時に`~/.config/chezmoi/chezmoi.toml`から読み込まれます（本リポジトリの`chezmoi-config`ロールが事前生成する値、または過去に対話入力した値）。
+`.gitIdentity.*`の値は`chezmoi init`時に`~/.config/chezmoi/chezmoi.toml`から読み込まれます（本リポジトリの`chezmoi-config`ロールが事前生成する値、または過去に対話入力した値）。1Passwordは複数アカウント同時サインインをしない運用のため、`onepasswordRead`にaccount引数は渡しません（そのマシンでサインインしている唯一のアカウントが自動的に使われます）。
 
 1Password CLIが未認証の場合、`update` / `apply` は**自動的にスキップ**されて警告が表示されます。
 

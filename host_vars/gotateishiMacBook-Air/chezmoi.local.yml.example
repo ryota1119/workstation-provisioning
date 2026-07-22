@@ -4,12 +4,10 @@
 #   cp chezmoi.local.yml.example chezmoi.local.yml
 #   その後、実際の値に書き換える。
 #
-# account には1Passwordのサインインアドレス（会社名等が含まれ得る）ではなく、
-# `op account get --format=json` で取得できる account_uuid を使うことを推奨する
-# （gitignore対象なので必須ではないが、誤ってcommitされた場合の影響を減らせる）。
+# 1Passwordは複数アカウント同時サインインをしない運用のため、account指定は不要
+# （op readはそのマシンでサインインしている唯一のアカウントを自動的に使う）。
 
 chezmoi_git_identity:
-  onepassword_account: "<account_uuid>"
   onepassword_username_path: "op://<vault>/<item>/username"
   onepassword_email_path: "op://<vault>/<item>/email"
   onepassword_signing_key_path: "op://<vault>/id_ed25519/public_key"

@@ -1,7 +1,6 @@
 {# ansibleが生成するchezmoi設定。promptStringOnceは既存の値を優先するため、
    このファイルが先に存在していれば chezmoi init 時の対話プロンプトは発生しない。 #}
 [data.gitIdentity]
-    onepasswordAccount        = "{{ chezmoi_git_identity.onepassword_account }}"
     onepasswordUsernamePath   = "{{ chezmoi_git_identity.onepassword_username_path }}"
     onepasswordEmailPath      = "{{ chezmoi_git_identity.onepassword_email_path }}"
     onepasswordSigningKeyPath = "{{ chezmoi_git_identity.onepassword_signing_key_path }}"
