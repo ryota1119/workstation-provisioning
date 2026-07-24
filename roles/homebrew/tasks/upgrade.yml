@@ -46,6 +46,21 @@
         label: "{{ item.item }}"
       when: cask_upgrade_results.results is defined
       changed_when: true
+      register: cask_reinstall_results
+      failed_when:
+        - cask_reinstall_results.rc != 0
+        - "'sudo: a password is required' not in (cask_reinstall_results.stderr | default(''))"
+
+    - name: 権限エラーで再インストールできなかったCaskの案内
+      ansible.builtin.debug:
+        msg: |
+          以下のCaskは対象Appの所有者/権限がずれているため、手動での対応が必要です：
+          sudo chown -R $(whoami) /Applications/{{ item.item.item }}.app
+          その後、再度 make upgrade を実行してください。
+      loop: "{{ cask_reinstall_results.results | default([]) | selectattr('rc', 'ne', 0) | list }}"
+      loop_control:
+        label: "{{ item.item.item }}"
+      when: cask_reinstall_results.results is defined
 
     - name: Cask（sudo必要）の手動アップグレード案内
       ansible.builtin.debug:

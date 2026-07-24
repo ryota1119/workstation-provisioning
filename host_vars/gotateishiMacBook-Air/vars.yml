@@ -10,7 +10,6 @@ brew_formula_extra: []
 
 # このマシンにだけ追加するCaskアプリ
 brew_casks_normal_extra:
-  - chatwork
   - zen
 
 # このマシンにだけ追加するCaskアプリ（sudo必要）
