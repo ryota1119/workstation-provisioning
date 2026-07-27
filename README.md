@@ -414,6 +414,22 @@ op signin
 chezmoi update --force
 ```
 
+### chezmoiが「no 1Password account found」/「isn't an item in the vault」エラーで失敗する場合
+
+`~/.config/chezmoi/chezmoi.toml`（本リポジトリの管理外・gitignore対象）に保存された値が実際の1Password側の状態とズレていると発生します。このファイルは`chezmoi-config-bootstrap`ロールが事前生成しますが、`onepasswordAccount`のように事前生成の対象外の項目や、1Password側の変更（アイテム名変更など）までは追従しません。
+
+```bash
+# 1Passwordに登録済みのアカウント一覧（url/email/account_uuidを確認）
+op account list --format=json
+
+# 該当アイテムが実際に存在するか、パスが正しいか確認
+op item list --vault <vault名>
+op item get "<アイテム名>" --vault <vault名>
+```
+
+- **`no 1Password account found matching ...`**: `chezmoi.toml`の`onepasswordAccount`が`op account list`の`url`（スキームなし・末尾スラッシュなし。例: `nishinipponshimbunmedialab.1password.com`）／`email`／`account_uuid`のいずれとも完全一致していないと発生します。`op` CLI自体は`https://`付きや末尾スラッシュ付きでも動きますが、chezmoiの`onepasswordRead`は`op account list`の値と厳密一致でしか照合しません。なお、1台のMacで1Passwordに複数アカウントを同時サインインしている場合（会社アカウント＋個人アカウントなど）は本リポジトリの想定（「1Passwordは複数アカウント同時サインインをしない運用」、上記「1Password CLIとの連携」参照）から外れており、`onepasswordAccount`の指定が必須になります。
+- **`"<アイテム名>" isn't an item in the "<vault>" vault`**: `chezmoi.toml`の`onepasswordUsernamePath`/`onepasswordEmailPath`/`onepasswordSigningKeyPath`が参照する1Passwordアイテムがリネーム・削除されている場合に発生します。`chezmoi.toml`側のパスを実際のアイテム名に書き換えてください。
+
 ### `host_vars/{ホスト名}.yml` が存在しないと言われる場合
 
 `make mac-bootstrap` を実行すると、ホスト名（`scutil --get LocalHostName`）から自動生成されます。

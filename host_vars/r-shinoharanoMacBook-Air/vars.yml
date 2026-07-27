@@ -1,5 +1,5 @@
 ---
-# 仕事用マシン固有の設定（gotateishiMacBook-Air）
+# r-shinoharanoMacBook-Air（仕事用マシン）固有の設定
 # group_vars/all.yml の共通設定に追加・上書きする内容を記述します。
 
 # Mac App Store アプリのインストールを無効化
