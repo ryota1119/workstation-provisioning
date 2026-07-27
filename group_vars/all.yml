@@ -27,6 +27,7 @@ brew_formula:
   - neovim
   - tig
   - tmux
+  - tree-sitter-cli
 
   # シェル
   - zsh
