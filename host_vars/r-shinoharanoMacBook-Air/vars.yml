@@ -13,4 +13,5 @@ brew_casks_normal_extra:
   - zen
 
 # このマシンにだけ追加するCaskアプリ（sudo必要）
-brew_casks_sudo_required_extra: []
+brew_casks_sudo_required_extra:
+  - microsoft-office
