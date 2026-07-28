@@ -108,6 +108,7 @@ brew_casks_normal:
   - postman
   - rectangle
   - setapp
+  - slack
   - superset
   - xdevplatform/tap/xurl
 
