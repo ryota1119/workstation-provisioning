@@ -7,6 +7,7 @@ mise_bin: "{{ homebrew_prefix }}/bin/mise"
 
 # Tapリポジトリ
 brew_taps:
+  - stablyai/orca
   - xdevplatform/tap
 
 # Formulaパッケージ
@@ -23,6 +24,7 @@ brew_formula:
   - mas
   - mise
   - neovim
+  - stablyai/orca/orca
   - tig
   - tmux
   - tree-sitter-cli
