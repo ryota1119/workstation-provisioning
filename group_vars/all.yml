@@ -7,7 +7,6 @@ mise_bin: "{{ homebrew_prefix }}/bin/mise"
 
 # Tapリポジトリ
 brew_taps:
-  - stablyai/orca
   - xdevplatform/tap
 
 # Formulaパッケージ
@@ -24,7 +23,7 @@ brew_formula:
   - mas
   - mise
   - neovim
-  - stablyai/orca/orca
+  - ollama
   - tig
   - tmux
   - tree-sitter-cli
@@ -90,6 +89,7 @@ brew_casks_normal:
   - alt-tab
   - claude
   - claude-code
+  - cmux
   - codex
   - codex-app
   - chatgpt
@@ -97,6 +97,7 @@ brew_casks_normal:
   - figma
   - font-fira-code-nerd-font
   - font-hack-nerd-font
+  - font-hackgen-nerd
   - gcloud-cli
   - ghostty
   - google-chrome
