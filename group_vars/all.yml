@@ -91,7 +91,7 @@ brew_casks_normal:
   - claude-code
   - cmux
   - codex
-  - codex-app
+  - codexbar
   - chatgpt
   - firefox
   - figma
