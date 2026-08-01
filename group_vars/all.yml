@@ -17,7 +17,6 @@ brew_formula:
   - git
   - gh
   - ghq
-  - hermes-agent
   - httpie
   - lazygit
   - mas
@@ -25,7 +24,6 @@ brew_formula:
   - neovim
   - ollama
   - tig
-  - tmux
   - tree-sitter-cli
 
   # シェル
