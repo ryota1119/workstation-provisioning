@@ -109,7 +109,6 @@ brew_casks_normal:
   - rectangle
   - setapp
   - slack
-  - superset
   - xdevplatform/tap/xurl
 
 # Caskアプリケーション（sudo必要）
