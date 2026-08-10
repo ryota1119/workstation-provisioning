@@ -1,0 +1,36 @@
+---
+- name: LaunchAgentsディレクトリを作成
+  ansible.builtin.file:
+    path: "{{ launchd_agents_dir }}"
+    state: directory
+    mode: "0755"
+
+- name: ログ出力先ディレクトリを作成
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/logs"
+    state: directory
+    mode: "0755"
+
+- name: 定期実行スクリプトに実行権限を付与
+  ansible.builtin.file:
+    path: "{{ launchd_upgrade_script }}"
+    mode: "0755"
+
+- name: make upgradeの定期実行plistを配置
+  ansible.builtin.template:
+    src: workstation-upgrade.plist.j2
+    dest: "{{ launchd_upgrade_plist }}"
+    mode: "0644"
+    validate: "/usr/bin/plutil -lint %s"
+  notify: LaunchAgentを再読み込み
+
+- name: LaunchAgentの登録状態を確認
+  ansible.builtin.command: "launchctl print gui/{{ ansible_user_uid }}/{{ launchd_upgrade_label }}"
+  register: launchd_upgrade_state
+  changed_when: false
+  failed_when: false
+
+- name: 未登録のLaunchAgentを登録
+  ansible.builtin.command: "launchctl bootstrap gui/{{ ansible_user_uid }} {{ launchd_upgrade_plist }}"
+  when: launchd_upgrade_state.rc != 0
+  changed_when: true

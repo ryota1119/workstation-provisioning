@@ -1,0 +1,16 @@
+---
+# upgradeタグには含めない。make upgrade実行中にこのロールが走ると、
+# launchctl bootoutが自分自身のジョブを停止してしまうため。
+- name: make upgradeの定期実行設定
+  ansible.builtin.import_tasks: install.yml
+  when: enable_launchd_upgrade | bool
+  tags:
+    - install
+    - launchd
+
+- name: make upgradeの定期実行設定を解除
+  ansible.builtin.import_tasks: absent.yml
+  when: not (enable_launchd_upgrade | bool)
+  tags:
+    - install
+    - launchd

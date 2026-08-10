@@ -1,0 +1,16 @@
+---
+- name: LaunchAgentの登録状態を確認
+  ansible.builtin.command: "launchctl print gui/{{ ansible_user_uid }}/{{ launchd_upgrade_label }}"
+  register: launchd_upgrade_state
+  changed_when: false
+  failed_when: false
+
+- name: LaunchAgentの登録を解除
+  ansible.builtin.command: "launchctl bootout gui/{{ ansible_user_uid }}/{{ launchd_upgrade_label }}"
+  when: launchd_upgrade_state.rc == 0
+  changed_when: true
+
+- name: plistを削除
+  ansible.builtin.file:
+    path: "{{ launchd_upgrade_plist }}"
+    state: absent

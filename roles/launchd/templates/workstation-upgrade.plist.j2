@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- このファイルはAnsible（roles/launchd）が生成します。直接編集しないこと。 -->
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>Label</key>
+	<string>{{ launchd_upgrade_label }}</string>
+
+	<key>ProgramArguments</key>
+	<array>
+		<string>/bin/zsh</string>
+		<string>{{ launchd_upgrade_script }}</string>
+	</array>
+
+	<key>WorkingDirectory</key>
+	<string>{{ playbook_dir }}</string>
+
+	<key>StartCalendarInterval</key>
+	<array>
+{% for entry in launchd_upgrade_schedule %}
+		<dict>
+			<key>Hour</key>
+			<integer>{{ entry.hour }}</integer>
+			<key>Minute</key>
+			<integer>{{ entry.minute }}</integer>
+		</dict>
+{% endfor %}
+	</array>
+
+	<key>RunAtLoad</key>
+	<false/>
+
+	<key>StandardOutPath</key>
+	<string>{{ launchd_upgrade_log }}</string>
+	<key>StandardErrorPath</key>
+	<string>{{ launchd_upgrade_log }}</string>
+
+	<key>ProcessType</key>
+	<string>Background</string>
+</dict>
+</plist>

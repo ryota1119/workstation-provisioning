@@ -27,3 +27,7 @@
 
     # 6. workspace-base: ~/Workspaceの基盤リポジトリをclone/更新（他ロールに依存しない）
     - role: workspace-base
+
+    # 7. launchd: make upgradeの定期実行を登録（upgradeタグでは実行しない）
+    - role: launchd
+      when: ansible_os_family == 'Darwin'
