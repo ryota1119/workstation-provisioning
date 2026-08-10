@@ -86,7 +86,7 @@ brew_casks_normal:
   - alfred
   - alt-tab
   - claude
-  - claude-code
+  - claude-code@latest
   - cmux
   - codex
   - codexbar
