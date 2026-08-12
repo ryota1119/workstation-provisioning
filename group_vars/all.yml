@@ -158,22 +158,3 @@ chezmoi_git_identity:
 # workspace-base（~/Workspaceの基盤リポジトリ）のclone先・URL
 workspace_base_repo_url: "git@github.com:ryota1119/workspace-base.git"
 workspace_dest: "{{ ansible_env.HOME }}/Workspace"
-
-# make upgradeの定期実行（launchd）
-# true: LaunchAgentを配置して登録 / false: 登録解除してplistを削除
-# host_vars/{ホスト名}.yml で上書き可能
-enable_launchd_upgrade: true
-
-launchd_agents_dir: "{{ ansible_env.HOME }}/Library/LaunchAgents"
-launchd_upgrade_label: "com.{{ ansible_user_id }}.workstation-upgrade"
-launchd_upgrade_plist: "{{ launchd_agents_dir }}/{{ launchd_upgrade_label }}.plist"
-launchd_upgrade_script: "{{ playbook_dir }}/scripts/upgrade-scheduled.sh"
-launchd_upgrade_log: "{{ playbook_dir }}/logs/launchd-upgrade.log"
-
-# 実行時刻（24時間表記）。要素を増やせば1日に何回でも実行できる。
-# 混雑を避けるため0分・30分は使わない。
-launchd_upgrade_schedule:
-  - hour: 10
-    minute: 7
-  - hour: 17
-    minute: 7

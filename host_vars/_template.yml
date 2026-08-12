@@ -6,10 +6,6 @@
 # Mac App Store アプリのインストール（true: 有効 / false: 無効）
 enable_mas: true
 
-# make upgradeの定期実行（true: 有効 / false: 無効）
-# falseにするとLaunchAgentの登録を解除しplistを削除する
-enable_launchd_upgrade: true
-
 # このマシンにだけ追加するFormulaパッケージ
 brew_formula_extra: []
 
