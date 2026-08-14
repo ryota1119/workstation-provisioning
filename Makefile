@@ -23,6 +23,7 @@ help:
 	@echo "  chezmoi                    - chezmoiを初期化してdotfilesを適用"
 	@echo "  chezmoi-config-bootstrap   - chezmoi.tomlの事前生成のみ(1Password対話プロンプト回避)"
 	@echo "  workspace-base             - workspace-base(~/Workspace)のclone/更新のみ"
+	@echo "  workspace-repositories     - ghq配下のMCPリポジトリのclone/更新と依存同期"
 	@echo "  mac-setting                - macOSシステム設定の適用"
 	@echo ""
 	@echo "Bootstrap & Utilities:"
@@ -104,6 +105,11 @@ chezmoi-config-bootstrap:
 workspace-base:
 	@echo "Running workspace-base role..."
 	@$(ANSIBLE_PLAYBOOK) site.yml --tags "workspace-base"
+
+.PHONY: workspace-repositories
+workspace-repositories:
+	@echo "Running workspace-repositories role..."
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "workspace-repositories"
 
 .PHONY: mac-setting
 mac-setting:

@@ -1,0 +1,40 @@
+---
+- name: MCPリポジトリをclone/更新
+  ansible.builtin.command:
+    argv:
+      - ghq
+      - get
+      - --update
+      - -p
+      - "{{ item.repo }}"
+  loop: "{{ workspace_repositories | default([]) }}"
+  loop_control:
+    label: "{{ item.repo }}"
+  register: ghq_get_result
+  changed_when: >-
+    'Already up to date.' not in (ghq_get_result.stdout ~ ghq_get_result.stderr)
+    and 'Already up-to-date.' not in (ghq_get_result.stdout ~ ghq_get_result.stderr)
+  tags:
+    - install
+    - upgrade
+    - workspace-repositories
+
+- name: MCPリポジトリのPython依存関係を同期
+  ansible.builtin.command:
+    argv:
+      - uv
+      - sync
+      - --frozen
+  args:
+    chdir: "{{ workspace_repositories_root }}/github.com/RayLabOrg/{{ item.name }}"
+  loop: "{{ workspace_repositories | default([]) }}"
+  loop_control:
+    label: "{{ item.name }}"
+  register: uv_sync_result
+  changed_when: >-
+    (uv_sync_result.stdout ~ uv_sync_result.stderr)
+    is search('Creating virtual environment|Installed |Uninstalled |Updated ')
+  tags:
+    - install
+    - upgrade
+    - workspace-repositories

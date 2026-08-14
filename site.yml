@@ -27,3 +27,6 @@
 
     # 6. workspace-base: ~/Workspaceの基盤リポジトリをclone/更新（他ロールに依存しない）
     - role: workspace-base
+
+    # 7. workspace-repositories: ghq配下のMCPリポジトリをclone/更新して依存関係を同期
+    - role: workspace-repositories

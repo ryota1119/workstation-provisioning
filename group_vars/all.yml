@@ -158,3 +158,12 @@ chezmoi_git_identity:
 # workspace-base（~/Workspaceの基盤リポジトリ）のclone先・URL
 workspace_base_repo_url: "git@github.com:ryota1119/workspace-base.git"
 workspace_dest: "{{ ansible_env.HOME }}/Workspace"
+
+# workspace-repositories（ghq配下の個別リポジトリ）
+# host_vars/{ホスト名}.yml でclone先またはリポジトリ一覧を上書き可能
+workspace_repositories_root: "{{ ansible_env.HOME }}/Workspace/repos"
+workspace_repositories:
+  - { name: "hn-mcp", repo: "github.com/RayLabOrg/hn-mcp" }
+  - { name: "qiita-mcp", repo: "github.com/RayLabOrg/qiita-mcp" }
+  - { name: "zenn-mcp", repo: "github.com/RayLabOrg/zenn-mcp" }
+  - { name: "socialdata-mcp", repo: "github.com/RayLabOrg/socialdata-mcp" }
