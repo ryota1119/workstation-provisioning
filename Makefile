@@ -24,6 +24,7 @@ help:
 	@echo "  chezmoi-config-bootstrap   - chezmoi.tomlの事前生成のみ(1Password対話プロンプト回避)"
 	@echo "  workspace-base             - workspace-base(~/Workspace)のclone/更新のみ"
 	@echo "  workspace-repositories     - ghq配下のMCPリポジトリのclone/更新と依存同期"
+	@echo "  workspace-agent-tools      - OpenCode向けポータブルSkillを公式スクリプトでリンク"
 	@echo "  mac-setting                - macOSシステム設定の適用"
 	@echo ""
 	@echo "Bootstrap & Utilities:"
@@ -110,6 +111,11 @@ workspace-base:
 workspace-repositories:
 	@echo "Running workspace-repositories role..."
 	@$(ANSIBLE_PLAYBOOK) site.yml --tags "workspace-repositories"
+
+.PHONY: workspace-agent-tools
+workspace-agent-tools:
+	@echo "Running workspace-agent-tools role..."
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "workspace-agent-tools"
 
 .PHONY: mac-setting
 mac-setting:

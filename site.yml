@@ -30,3 +30,6 @@
 
     # 7. workspace-repositories: ghq配下のMCPリポジトリをclone/更新して依存関係を同期
     - role: workspace-repositories
+
+    # 8. workspace-agent-tools: OpenCode向けポータブルSkillを公式スクリプトでリンク
+    - role: workspace-agent-tools
