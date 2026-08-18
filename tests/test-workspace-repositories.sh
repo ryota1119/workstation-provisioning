@@ -20,7 +20,7 @@ tasks="$repo_root/roles/workspace-repositories/tasks/main.yml"
 for repository in hn-mcp qiita-mcp zenn-mcp socialdata-mcp; do
   assert_contains "$variables" "name: \"$repository\""
   assert_contains "$variables" "repo: \"github.com/RayLabOrg/$repository\""
-  assert_contains "$tasks" "{{ workspace_repositories_root }}/github.com/RayLabOrg/{{ item.name }}"
+  assert_contains "$tasks" "{{ workspace_repositories_root }}/{{ item.item.repo }}"
 done
 
 assert_contains "$variables" 'workspace_repositories_root: "{{ ansible_env.HOME }}/Workspace/repos"'

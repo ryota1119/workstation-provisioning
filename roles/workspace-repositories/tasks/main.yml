@@ -11,9 +11,29 @@
   loop_control:
     label: "{{ item.repo }}"
   register: ghq_get_result
+  # ローカルに未コミット変更やfeatureブランチがあるとpullが失敗するが、
+  # make upgrade全体を止めないよう警告扱いにして後続タスクでスキップする
+  failed_when: false
   changed_when: >-
-    'Already up to date.' not in (ghq_get_result.stdout ~ ghq_get_result.stderr)
+    ghq_get_result.rc == 0
+    and 'Already up to date.' not in (ghq_get_result.stdout ~ ghq_get_result.stderr)
     and 'Already up-to-date.' not in (ghq_get_result.stdout ~ ghq_get_result.stderr)
+  tags:
+    - install
+    - upgrade
+    - workspace-repositories
+
+- name: clone/更新に失敗したMCPリポジトリを警告
+  ansible.builtin.debug:
+    msg: |
+      以下のMCPリポジトリはclone/更新に失敗したため、依存関係の同期をスキップしました：
+      {{ ghq_get_failed | join(' ') }}
+      未コミット変更やブランチの切り替えがないか確認してください。
+  vars:
+    ghq_get_failed: >-
+      {{ ghq_get_result.results | default([]) | selectattr('rc', 'ne', 0)
+         | map(attribute='item.repo') | list }}
+  when: ghq_get_failed | length > 0
   tags:
     - install
     - upgrade
@@ -26,10 +46,10 @@
       - sync
       - --frozen
   args:
-    chdir: "{{ workspace_repositories_root }}/github.com/RayLabOrg/{{ item.name }}"
-  loop: "{{ workspace_repositories | default([]) }}"
+    chdir: "{{ workspace_repositories_root }}/{{ item.item.repo }}"
+  loop: "{{ ghq_get_result.results | default([]) | selectattr('rc', 'eq', 0) | list }}"
   loop_control:
-    label: "{{ item.name }}"
+    label: "{{ item.item.name }}"
   register: uv_sync_result
   changed_when: >-
     (uv_sync_result.stdout ~ uv_sync_result.stderr)
