@@ -3,13 +3,13 @@
   community.general.homebrew_tap:
     name: "{{ item }}"
     state: present
-  loop: "{{ brew_taps | default([], true) }}"
+  loop: "{{ brew_taps_all | default([], true) }}"
   loop_control:
     label: "{{ item }}"
 
 - name: Tapの信頼状態を確認
   ansible.builtin.command: "{{ brew_bin }} tap-info --json {{ item }}"
-  loop: "{{ brew_taps | default([], true) }}"
+  loop: "{{ brew_taps_all | default([], true) }}"
   register: tap_info_results
   changed_when: false
   loop_control:

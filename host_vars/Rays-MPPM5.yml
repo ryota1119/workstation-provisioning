@@ -2,8 +2,13 @@
 # Rays-MPPM5 マシン固有の設定
 # group_vars/all.yml の共通設定に追加・上書きする内容を記述してください。
 
+# このマシンにだけ追加するTapリポジトリ
+brew_taps_extra:
+  - anomalyco/tap
+
 # このマシンにだけ追加するFormulaパッケージ
-brew_formula_extra: []
+brew_formula_extra:
+  - anomalyco/tap/opencode
 
 # このマシンにだけ追加するCaskアプリ
 brew_casks_normal_extra:

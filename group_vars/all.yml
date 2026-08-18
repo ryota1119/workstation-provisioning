@@ -81,7 +81,6 @@ brew_formula:
 
 # Caskアプリケーション（通常）
 brew_casks_normal:
-  - 1password
   - 1password-cli
   - alfred
   - alt-tab
@@ -105,6 +104,7 @@ brew_casks_normal:
   - monitorcontrol
   - notion
   - obsidian
+  - orca
   - postman
   - rectangle
   - setapp

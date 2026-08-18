@@ -6,6 +6,9 @@
 # Mac App Store アプリのインストール（true: 有効 / false: 無効）
 enable_mas: true
 
+# このマシンにだけ追加するTapリポジトリ
+brew_taps_extra: []
+
 # このマシンにだけ追加するFormulaパッケージ
 brew_formula_extra: []
 

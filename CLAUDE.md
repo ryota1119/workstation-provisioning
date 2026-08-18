@@ -45,7 +45,7 @@ The playbook (`site.yml`) runs the roles below in dependency order. Chezmoi is m
 - `group_vars/all.yml` — base package lists shared by all machines
 - `host_vars/{hostname}.yml` — machine-specific overrides/additions (generated from `_template.yml` by `mac-bootstrap.sh`)
 
-Package lists are merged: `brew_formula` + `brew_formula_extra`, `brew_casks_normal` + `brew_casks_normal_extra`, etc.
+Package lists are merged: `brew_taps` + `brew_taps_extra`, `brew_formula` + `brew_formula_extra`, `brew_casks_normal` + `brew_casks_normal_extra`, etc.
 
 ### Adding packages
 

@@ -17,6 +17,7 @@
 
     - name: Homebrew管理対象リストを集約
       ansible.builtin.set_fact:
+        brew_taps_all: "{{ ((brew_taps | default([], true)) + (brew_taps_extra | default([], true))) | unique }}"
         brew_formula_all: "{{ ((brew_formula | default([], true)) + (brew_formula_extra | default([], true))) | unique }}"
         brew_casks_normal_all: "{{ ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | unique }}"
         brew_casks_sudo_required_all: "{{ ((brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true))) | unique }}"
