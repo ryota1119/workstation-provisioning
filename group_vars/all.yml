@@ -168,8 +168,3 @@ workspace_repositories:
   - { name: "zenn-mcp", repo: "github.com/RayLabOrg/zenn-mcp" }
   - { name: "socialdata-mcp", repo: "github.com/RayLabOrg/socialdata-mcp" }
 
-# workspace-agent-tools（OpenCode向けポータブルSkill配布）
-# host_vars/{ホスト名}.yml で上書き可能
-workspace_agent_tool_name: "claude-obsidian"
-workspace_agent_tool_repo: "github.com/AgriciDaniel/claude-obsidian"
-workspace_agent_tool_checkout: "{{ workspace_repositories_root }}/github.com/AgriciDaniel/claude-obsidian"

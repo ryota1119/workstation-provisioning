@@ -41,11 +41,10 @@ macOS環境のセットアップと管理を自動化するAnsibleプロジェ�
         ├─ chezmoi-config-bootstrap … chezmoi.tomlを事前生成（1Password参照先。会社PCならhost_vars/{ホスト名}/chezmoi.local.ymlで上書き）
         ├─ workspace-base           … workspace-baseリポジトリを~/Workspaceへclone
         ├─ workspace-repositories   … 4つのMCPリポジトリを~/Workspace/repos/github.com/RayLabOrgへclone/更新し、uv sync --frozen
-        ├─ workspace-agent-tools    … claude-obsidianを公式checkoutから更新し、OpenCodeへ15個のポータブルSkillをリンク
         ├─ chezmoi-init             … dotfilesリポジトリをclone（scripts/chezmoi.sh init）
         └─ chezmoi-apply            … dotfilesを適用（scripts/chezmoi.sh apply）
 6. （日常）make upgrade
-        └─ site.yml --tags upgrade … homebrew/mas/workspace-base/workspace-repositories/workspace-agent-toolsの更新。chezmoiは含まれない（後述）
+        └─ site.yml --tags upgrade … homebrew/mas/workspace-base/workspace-repositoriesの更新。chezmoiは含まれない（後述）
 ```
 
 ポイント：
@@ -54,7 +53,6 @@ macOS環境のセットアップと管理を自動化するAnsibleプロジェ�
 - **`make upgrade`にchezmoiは含まれない。** dotfilesを最新化したい場合は個別に`make chezmoi-upgrade`を実行する（対話プロンプトの問題が解決したので再統合も検討可能）。
 - **`workspace-base`ロールは`install`/`upgrade`両方に含まれる。** `~/Workspace`が既に存在する場合は`ansible.builtin.git`が検知して無変更（新規PCではclone）。ここでcloneされるのは`.claude/skills/`とCLAUDE.mdの基盤（`workspace-base`リポジトリ）のみで、`repos/`・`sandbox/`配下の個別プロジェクトや`exocortex`（Google Drive同期）はこのロールの対象外（各々を`gh`/`ghq`/`ghs`で別途復元、Google Driveは事前にサインイン・同期完了が前提）。
 - **`workspace-repositories`ロールは`install`/`upgrade`両方に含まれる。** `hn-mcp`、`qiita-mcp`、`zenn-mcp`、`socialdata-mcp`を`ghq get --update -p`で`~/Workspace/repos/github.com/RayLabOrg/`へclone/更新し、各リポジトリで`uv sync --frozen`を実行する。
-- **`workspace-agent-tools`ロールは`install`/`upgrade`両方に含まれる。** upstreamの`claude-obsidian`を`~/Workspace/repos/github.com/AgriciDaniel/claude-obsidian`へ`ghq get --update -p`でclone/更新し、公式の`bin/setup-multi-agent.sh --host opencode --apply`でOpenCodeに15個のポータブルSkillをリンクする。続けて`--check`でリンクを検証する。Claude Code pluginのhooks/agentsはOpenCodeへ移植しない。Exocortexのinit/adopt/書き込みも自動実行しない。既存の異なるリンクは公式スクリプトの仕様に従い、削除・置換しない。
 - 1Password自体のサインイン・アンロックと、Google Drive等の外部同期待ちは本質的に手動/時間依存のため自動化していない。
 
 ## 🛠️ 初回セットアップ
@@ -121,7 +119,6 @@ make all
 | `make chezmoi-config-bootstrap` | chezmoi.tomlの事前生成のみ（1Password対話プロンプト回避） |
 | `make workspace-base` | workspace-base（`~/Workspace`）のclone/更新のみ |
 | `make workspace-repositories` | ghq配下の4つのMCPリポジトリをclone/更新し、依存関係を同期 |
-| `make workspace-agent-tools` | claude-obsidian公式checkoutからOpenCodeへ15個のポータブルSkillをリンクし、検証 |
 | `make mac-setting` | macOSシステム設定の適用 |
 
 ### ブートストラップ・ユーティリティ
@@ -175,8 +172,6 @@ workstation-provisioning/
 │   │   └── main.yml             # workspace-baseリポジトリを~/Workspaceへclone/更新
 │   ├── workspace-repositories/tasks/
 │   │   └── main.yml             # MCPリポジトリをghq配下へclone/更新し、uv sync --frozen
-│   ├── workspace-agent-tools/tasks/
-│   │   └── main.yml             # claude-obsidian公式スクリプトでOpenCode向けSkillをリンク・検証
 │   └── mac-setting/
 │       ├── tasks/
 │       │   ├── main.yml
@@ -198,18 +193,17 @@ chezmoi自体の`init`/`update`/`apply`はansibleのロール・タグではな�
 
 playbook 全体は2つのトップレベルタグと、ロール個別タグで制御できます（chezmoi自体の`init`/`update`/`apply`はansibleの外・`scripts/chezmoi.sh`が担当するため、この表には含まれません）。
 
-| タグ | Homebrew | MAS | mise | chezmoi-config-bootstrap | workspace-base | workspace-repositories | workspace-agent-tools | mac-setting | 用途 |
-|---|---|---|---|---|---|---|---|---|---|
-| `install` | install | install | install | 実行 | clone/更新 | clone/更新・uv sync | clone/更新・Skillリンク/検証 | defaults | 初回インストール（`make provision`） |
-| `upgrade` | upgrade | upgrade | - | - | clone/更新 | clone/更新・uv sync | clone/更新・Skillリンク/検証 | - | 日常更新（`make upgrade`） |
-| `homebrew` | install | - | - | - | - | - | - | - | Homebrewのみ |
-| `mas` | - | install | - | - | - | - | - | - | MASのみ |
-| `mise` | - | - | install | - | - | - | - | - | miseのみ |
-| `chezmoi-config-bootstrap` | - | - | - | 実行 | - | - | - | - | chezmoi.tomlの事前生成のみ |
-| `workspace-base` | - | - | - | - | clone/更新 | - | - | - | workspace-baseのclone/更新のみ |
-| `workspace-repositories` | - | - | - | - | - | clone/更新・uv sync | - | - | MCPリポジトリのclone/更新・依存同期のみ |
-| `workspace-agent-tools` | - | - | - | - | - | - | clone/更新・Skillリンク/検証 | - | OpenCode向けポータブルSkillのリンク・検証のみ |
-| `mac-setting` | - | - | - | - | - | - | - | defaults | macOS設定のみ |
+| タグ | Homebrew | MAS | mise | chezmoi-config-bootstrap | workspace-base | workspace-repositories | mac-setting | 用途 |
+|---|---|---|---|---|---|---|---|---|
+| `install` | install | install | install | 実行 | clone/更新 | clone/更新・uv sync | defaults | 初回インストール（`make provision`） |
+| `upgrade` | upgrade | upgrade | - | - | clone/更新 | clone/更新・uv sync | - | 日常更新（`make upgrade`） |
+| `homebrew` | install | - | - | - | - | - | - | Homebrewのみ |
+| `mas` | - | install | - | - | - | - | - | MASのみ |
+| `mise` | - | - | install | - | - | - | - | miseのみ |
+| `chezmoi-config-bootstrap` | - | - | - | 実行 | - | - | - | chezmoi.tomlの事前生成のみ |
+| `workspace-base` | - | - | - | - | clone/更新 | - | - | workspace-baseのclone/更新のみ |
+| `workspace-repositories` | - | - | - | - | - | clone/更新・uv sync | - | MCPリポジトリのclone/更新・依存同期のみ |
+| `mac-setting` | - | - | - | - | - | - | defaults | macOS設定のみ |
 
 ポイント:
 
@@ -219,7 +213,6 @@ playbook 全体は2つのトップレベルタグと、ロール個別タグで�
 - chezmoi自体の実行（init/update/apply）は`Makefile`が`scripts/chezmoi.sh`を直接呼ぶことで行われ、`make provision`では実行されますが`make upgrade`では実行されません（後述）
 - **workspace-base** は`ansible.builtin.git`で`~/Workspace`をclone/更新するのみ。`install`/`upgrade`どちらのタグにも含まれます（基盤リポジトリなので日常的にも最新化したい）
 - **workspace-repositories** は`ghq get --update -p`で4つのMCPリポジトリを`~/Workspace/repos/github.com/RayLabOrg/`へclone/更新し、`uv sync --frozen`で依存関係を同期する。`install`/`upgrade`どちらにも含まれる
-- **workspace-agent-tools** は`claude-obsidian`を`~/Workspace/repos/github.com/AgriciDaniel/claude-obsidian`へclone/更新し、公式スクリプトでOpenCodeに15個のポータブルSkillをリンクして検証する。Claude Code pluginのhooks/agentsおよびExocortexのinit/adopt/書き込みは対象外で、`install`/`upgrade`どちらにも含まれる
 
 ## 🔧 設定ファイル
 
