@@ -168,4 +168,3 @@ workspace_repositories:
   - { name: "qiita-mcp", repo: "github.com/RayLabOrg/qiita-mcp" }
   - { name: "zenn-mcp", repo: "github.com/RayLabOrg/zenn-mcp" }
   - { name: "socialdata-mcp", repo: "github.com/RayLabOrg/socialdata-mcp" }
-
