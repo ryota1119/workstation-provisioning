@@ -7,6 +7,7 @@ mise_bin: "{{ homebrew_prefix }}/bin/mise"
 
 # Tapリポジトリ
 brew_taps:
+  - stablyai/orca
   - xdevplatform/tap
 
 # Formulaパッケージ
@@ -104,11 +105,11 @@ brew_casks_normal:
   - monitorcontrol
   - notion
   - obsidian
-  - orca
   - postman
   - rectangle
   - setapp
   - slack
+  - stablyai/orca/orca
   - xdevplatform/tap/xurl
 
 # Caskアプリケーション（sudo必要）
