@@ -45,6 +45,7 @@ brew_formula:
   - jq
   - ripgrep
   - telnet
+  - terminal-notifier
   - tree
   - unar
   - usage
