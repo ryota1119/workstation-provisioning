@@ -1,0 +1,134 @@
+---
+# 1エージェント分の適用。main.yml から launchd_agents をループして include される。
+# 呼び出し側が loop_var: agent を渡す。
+
+- name: "{{ agent.label }}: パスを組み立て"
+  ansible.builtin.set_fact:
+    agent_plist_path: "{{ launchd_agents_dir }}/{{ agent.label }}.plist"
+    agent_check_path: "{{ launchd_agents_dir }}/.{{ agent.label }}.plist.check"
+    agent_backup_path: "{{ launchd_agents_dir }}/.{{ agent.label }}.plist.bak"
+
+# 稼働中のジョブのplistを壊れた内容で上書きすると、bootoutした後の
+# bootstrapが失敗してサービスが停止したまま残る。
+# まず検証用の場所へ出して plutil -lint を通す。これでテンプレート編集ミスの
+# 大半（タグの不整合など）は本番plistに触れる前に落とせる。
+- name: "{{ agent.label }}: plistを検証用に生成"
+  ansible.builtin.template:
+    src: "{{ agent.template }}"
+    dest: "{{ agent_check_path }}"
+    mode: "0644"
+  changed_when: false
+
+- name: "{{ agent.label }}: plistの構文を検証"
+  ansible.builtin.command:
+    cmd: "plutil -lint {{ agent_check_path }}"
+  changed_when: false
+
+- name: "{{ agent.label }}: 検証用plistを削除"
+  ansible.builtin.file:
+    path: "{{ agent_check_path }}"
+    state: absent
+  changed_when: false
+
+# plutil が通っても launchd が受け付けない内容はあり得る
+# （例: </plist> の後ろにゴミがある場合。plutil は OK を返すが bootstrap は失敗する）。
+# その場合に元の状態へ戻せるよう、置き換える前の内容を退避しておく。
+- name: "{{ agent.label }}: 既存plistの有無を確認"
+  ansible.builtin.stat:
+    path: "{{ agent_plist_path }}"
+  register: agent_plist_before
+
+- name: "{{ agent.label }}: 既存plistを退避"
+  ansible.builtin.copy:
+    src: "{{ agent_plist_path }}"
+    dest: "{{ agent_backup_path }}"
+    remote_src: true
+    mode: "0644"
+  when: agent_plist_before.stat.exists
+  changed_when: false
+
+- name: "{{ agent.label }}: plistを配置"
+  ansible.builtin.template:
+    src: "{{ agent.template }}"
+    dest: "{{ agent_plist_path }}"
+    mode: "0644"
+  register: agent_plist
+
+- name: "{{ agent.label }}: 現在の登録状態を確認"
+  ansible.builtin.command:
+    cmd: "launchctl print gui/{{ ansible_user_uid }}/{{ agent.label }}"
+  register: agent_print
+  changed_when: false
+  failed_when: false
+
+# plistを書き換えてもlaunchdは古い定義を掴んだままなので、
+# 内容が変わったときは一度アンロードしてから読み込み直す。
+#
+# ここでbootoutが失敗したまま先へ進むと、次回実行では
+# 「plist未変更 + 登録済み」と判定されて何もせず完了してしまい、
+# 古い定義を掴んだジョブが二度と直らない。失敗は必ず落とす。
+- name: "{{ agent.label }}: 内容が変わったのでアンロード"
+  ansible.builtin.command:
+    cmd: "launchctl bootout gui/{{ ansible_user_uid }}/{{ agent.label }}"
+  when:
+    - agent_plist.changed
+    - agent_print.rc == 0
+  register: agent_bootout
+  changed_when: agent_bootout.rc == 0
+  # 実行中にジョブが自然終了して既に消えている場合だけ許容する。
+  failed_when: >-
+    agent_bootout.rc != 0
+    and 'No such process' not in (agent_bootout.stderr | default(''))
+
+- name: "{{ agent.label }}: アンロードされたことを確認"
+  ansible.builtin.command:
+    cmd: "launchctl print gui/{{ ansible_user_uid }}/{{ agent.label }}"
+  when: agent_bootout is not skipped
+  register: agent_print_after_bootout
+  changed_when: false
+  failed_when: agent_print_after_bootout.rc == 0
+
+- name: "{{ agent.label }}: 読み込み（失敗したら退避したplistへ戻す）"
+  when: agent_plist.changed or agent_print.rc != 0
+  block:
+    - name: "{{ agent.label }}: 読み込む"
+      ansible.builtin.command:
+        cmd: "launchctl bootstrap gui/{{ ansible_user_uid }} {{ agent_plist_path }}"
+      changed_when: true
+
+  rescue:
+    - name: "{{ agent.label }}: 退避したplistへ戻す"
+      ansible.builtin.copy:
+        src: "{{ agent_backup_path }}"
+        dest: "{{ agent_plist_path }}"
+        remote_src: true
+        mode: "0644"
+      when: agent_plist_before.stat.exists
+
+    - name: "{{ agent.label }}: 戻したplistで読み込み直す"
+      ansible.builtin.command:
+        cmd: "launchctl bootstrap gui/{{ ansible_user_uid }} {{ agent_plist_path }}"
+      when: agent_plist_before.stat.exists
+      register: agent_rollback
+      failed_when: false
+      changed_when: agent_rollback.rc == 0
+
+    - name: "{{ agent.label }}: 新しいplistで起動できなかったことを報告"
+      ansible.builtin.fail:
+        msg: >-
+          {{ agent.label }} の launchctl bootstrap に失敗しました。
+          {% if agent_plist_before.stat.exists %}
+          plist は退避していた内容へ戻し、再読み込みを試みました
+          （rc={{ agent_rollback.rc | default('不明') }}）。
+          {% else %}
+          退避対象の既存plistが無かったため、戻せていません。
+          {% endif %}
+          roles/launchd/templates/{{ agent.template }} の内容を確認してください。
+          plutil -lint は通っても launchd が受け付けない内容があり得ます
+          （例: </plist> の後ろに余分な文字列がある）。
+
+- name: "{{ agent.label }}: 退避したplistを削除"
+  ansible.builtin.file:
+    path: "{{ agent_backup_path }}"
+    state: absent
+  changed_when: false

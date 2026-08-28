@@ -25,6 +25,7 @@ help:
 	@echo "  workspace-base             - workspace-base(~/Workspace)のclone/更新のみ"
 	@echo "  workspace-repositories     - ghq配下のMCPリポジトリのclone/更新と依存同期"
 	@echo "  mac-setting                - macOSシステム設定の適用"
+	@echo "  launchd                    - LaunchAgentの配置と読み込み"
 	@echo ""
 	@echo "Bootstrap & Utilities:"
 	@echo "  mac-bootstrap       - Xcode CLT、Homebrew、Ansibleの導入"
@@ -116,6 +117,11 @@ workspace-repositories:
 mac-setting:
 	@echo "Running mac-setting role..."
 	@$(ANSIBLE_PLAYBOOK) site.yml --tags "mac-setting"
+
+.PHONY: launchd
+launchd:
+	@echo "Running launchd role..."
+	@$(ANSIBLE_PLAYBOOK) site.yml --tags "launchd"
 
 # ============================================================
 # ブートストラップとユーティリティ

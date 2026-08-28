@@ -21,13 +21,18 @@
     - role: mac-setting
       when: ansible_os_family == 'Darwin'
 
-    # 5. chezmoi設定の事前生成(preseed): chezmoi init時の1Password対話プロンプトを回避する
+    # 5. launchd: ユーザーLaunchAgentを配置して常駐サービスを登録
+    #    homebrewで入れたバイナリを起動するため、homebrewより後に実行する
+    - role: launchd
+      when: ansible_os_family == 'Darwin'
+
+    # 6. chezmoi設定の事前生成(preseed): chezmoi init時の1Password対話プロンプトを回避する
     - role: chezmoi-config-bootstrap
       when: ansible_os_family == 'Darwin'
 
-    # 6. workspace-base: ~/Workspaceの基盤リポジトリをclone/更新（他ロールに依存しない）
+    # 7. workspace-base: ~/Workspaceの基盤リポジトリをclone/更新（他ロールに依存しない）
     - role: workspace-base
 
-    # 7. workspace-repositories: ghq配下のMCPリポジトリをclone/更新して依存関係を同期
+    # 8. workspace-repositories: ghq配下のMCPリポジトリをclone/更新して依存関係を同期
     - role: workspace-repositories
 

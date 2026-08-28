@@ -19,6 +19,7 @@ brew_formula:
   - gh
   - ghq
   - httpie
+  - llama.cpp
   - lazygit
   - mas
   - mise
@@ -169,3 +170,16 @@ workspace_repositories:
   - { name: "qiita-mcp", repo: "github.com/RayLabOrg/qiita-mcp" }
   - { name: "zenn-mcp", repo: "github.com/RayLabOrg/zenn-mcp" }
   - { name: "socialdata-mcp", repo: "github.com/RayLabOrg/socialdata-mcp" }
+
+# launchd（ユーザーLaunchAgent）
+# label はplistのLabelとファイル名（{label}.plist）に使う。
+# template は roles/launchd/templates/ 配下のパス。
+launchd_agents_dir: "{{ ansible_env.HOME }}/Library/LaunchAgents"
+launchd_agents:
+  # nvim の llama.vim が使うローカルAI補完サーバ（llama.cpp / Qwen2.5-Coder-3B）
+  - label: local.llama-server
+    template: local.llama-server.plist.j2
+
+# llama-server の待ち受けポート。nvim 側の endpoint_fim と揃える
+# （chezmoi: dot_config/nvim/lua/plugins/editor/llama.lua）
+llama_server_port: 8012

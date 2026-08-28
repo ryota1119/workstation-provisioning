@@ -35,8 +35,9 @@ The playbook (`site.yml`) runs the roles below in dependency order. Chezmoi is m
 2. **mas** — Mac App Store installs via `mas` CLI. Can be disabled per-machine with `enable_mas: false`.
 3. **mise** — Language runtime installs (Node, Python, PHP, Go, etc.). Only runs on `install` tag, never on `upgrade` (to avoid unexpected upgrades).
 4. **mac-setting** — Applies `defaults write` macOS system settings. Only runs on `install` tag, not `upgrade` (triggers Finder/Dock restart).
-5. **chezmoi-config-bootstrap** — Pre-generates `chezmoi.toml` so `chezmoi init` does not prompt for 1Password interactively. `install` tag only.
-6. **workspace-base** — Clones/updates the base repositories under `~/Workspace`. Runs on both `install` and `upgrade`.
+5. **launchd** — Places user LaunchAgents into `~/Library/LaunchAgents` and registers them with `launchctl bootstrap`. `install` tag only. Currently ships `local.llama-server` (llama.cpp FIM server on `127.0.0.1:8012`) used by nvim's llama.vim inline completion. Agents are declared in `launchd_agents` (`group_vars/all.yml`); a changed plist is `bootout`-ed before being re-bootstrapped.
+6. **chezmoi-config-bootstrap** — Pre-generates `chezmoi.toml` so `chezmoi init` does not prompt for 1Password interactively. `install` tag only.
+7. **workspace-base** — Clones/updates the base repositories under `~/Workspace`. Runs on both `install` and `upgrade`.
 
 **chezmoi** — Dotfiles management outside Ansible. `make provision` runs `init` + `apply`; `make chezmoi` runs `init` + `apply`. `make upgrade` does NOT touch chezmoi (dotfiles are only initialized/applied during provisioning). `chezmoi-init`/`chezmoi-upgrade`/`chezmoi-apply` targets remain available for manual use. Init/apply skip successfully if 1Password CLI is not authenticated.
 
@@ -57,9 +58,9 @@ Package lists are merged: `brew_taps` + `brew_taps_extra`, `brew_formula` + `bre
 
 | Tag | Roles included |
 |-----|----------------|
-| `install` | homebrew, mas, mise, mac-setting, chezmoi-config-bootstrap, workspace-base |
+| `install` | homebrew, mas, mise, mac-setting, launchd, chezmoi-config-bootstrap, workspace-base |
 | `upgrade` | homebrew, mas, workspace-base |
-| `homebrew` / `mas` / `mise` / `mac-setting` / `workspace-base` | individual role only |
+| `homebrew` / `mas` / `mise` / `mac-setting` / `launchd` / `workspace-base` | individual role only |
 
 Chezmoi is not an Ansible tag. Use the Makefile targets described above.
 

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Label は launchd_agents[].label と一致していなければならない。
+         ずれると launchctl print の確認先と実際の登録Labelが食い違い、
+         毎回 bootstrap を試みて rc=5 で失敗する。 -->
+    <key>Label</key>
+    <string>{{ agent.label }}</string>
+
+    <!--
+      nvim の llama.vim（ローカルAIインライン補完）が叩く FIM サーバ。
+      モデルは Qwen2.5-Coder-3B。Apple M5 / 24GB での実測は
+      TTFT 29ms、25トークン 675ms、37 tok/s、RSS 2.0GB。
+      7B は同条件で 17 tok/s しか出ず、llama.vim の既定 t_max_predict_ms = 1000 を
+      超えて提案が打ち切られるため使わない。
+      初回起動時はモデル（約3.1GB）を ~/.cache/huggingface へ自動ダウンロードする。
+    -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>{{ homebrew_prefix }}/bin/llama-server</string>
+        <string>--fim-qwen-3b-default</string>
+        <string>--host</string>
+        <string>127.0.0.1</string>
+        <string>--port</string>
+        <!-- nvim 側 endpoint_fim（chezmoi: dot_config/nvim/lua/plugins/editor/llama.lua）
+             とポートを揃える必要がある。片方だけ変えると接続できない。 -->
+        <string>{{ llama_server_port }}</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <!-- 異常終了時のみ再起動する。正常終了させたときは復活させない。 -->
+    <key>KeepAlive</key>
+    <dict>
+        <key>SuccessfulExit</key>
+        <false/>
+    </dict>
+
+    <!-- 起動失敗が続いたときの連続再起動を抑える -->
+    <key>ThrottleInterval</key>
+    <integer>30</integer>
+
+    <key>StandardOutPath</key>
+    <string>{{ ansible_env.HOME }}/Library/Logs/llama-server.log</string>
+    <key>StandardErrorPath</key>
+    <string>{{ ansible_env.HOME }}/Library/Logs/llama-server.log</string>
+
+    <!-- モデルは ~/.cache/huggingface 配下から読むため HOME が必要 -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>HOME</key>
+        <string>{{ ansible_env.HOME }}</string>
+    </dict>
+
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

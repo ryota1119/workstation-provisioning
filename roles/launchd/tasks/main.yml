@@ -1,0 +1,22 @@
+---
+- name: launchd LaunchAgentの配置と読み込み
+  tags:
+    - install
+    - launchd
+  block:
+    - name: LaunchAgentsディレクトリを作成
+      ansible.builtin.file:
+        path: "{{ launchd_agents_dir }}"
+        state: directory
+        mode: "0755"
+
+    # launchctlの終了コードは冪等性の判定に使えない
+    # （既に読み込み済みのplistへbootstrapすると rc=5 "Input/output error" を返す）。
+    # そのため「配置 → 現在の登録状態を確認 → 必要な分だけ操作」を
+    # エージェント単位で行う。
+    - name: LaunchAgentをエージェント単位で適用
+      ansible.builtin.include_tasks: agent.yml
+      loop: "{{ launchd_agents | default([], true) }}"
+      loop_control:
+        loop_var: agent
+        label: "{{ agent.label }}"
