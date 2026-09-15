@@ -22,9 +22,31 @@
         brew_casks_normal_all: "{{ ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | unique }}"
         brew_casks_sudo_required_all: "{{ ((brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true))) | unique }}"
 
+    # brew outdated は tap 修飾名ではなく末尾のトークン名しか出力しないため、
+    # 同じトークンを持つCaskが複数あると更新対象を一意に特定できない。
+    - name: Cask名のトークン重複を検出
+      vars:
+        brew_cask_tokens: "{{ (brew_casks_normal_all + brew_casks_sudo_required_all) | map('basename') | list }}"
+      ansible.builtin.assert:
+        that:
+          - brew_cask_tokens | unique | length == brew_cask_tokens | length
+        fail_msg: >-
+          Cask名の末尾トークンが重複しています:
+          {{ (brew_cask_tokens | community.general.counter) | dict2items
+             | selectattr('value', 'gt', 1) | map(attribute='key') | join(', ') }}。
+          tap修飾名と短縮名の二重定義、または別tapの同名Caskを確認してください。
+
     - name: Homebrewを最新版に更新
       community.general.homebrew:
         update_homebrew: true
+
+    # --full-name はcoreのCaskを短縮名、tapのCaskをtap修飾名で出力するため、
+    # 管理対象リストと同じ表記になり、そのまま厳密一致で比較できる。
+    - name: インストール済みCask一覧を取得
+      ansible.builtin.command: "{{ brew_bin }} list --cask --full-name"
+      register: installed_casks
+      changed_when: false
+      failed_when: false
 
 - name: Homebrewパッケージインストール処理
   ansible.builtin.import_tasks: install.yml

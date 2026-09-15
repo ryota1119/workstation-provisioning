@@ -31,18 +31,13 @@
   loop_control:
     label: "{{ item }}"
 
-- name: インストール済みCask一覧を取得
-  ansible.builtin.command: "{{ brew_bin }} list --cask"
-  register: installed_casks
-  changed_when: false
-  failed_when: false
-  when: ((brew_casks_normal_all | default([], true)) + (brew_casks_sudo_required_all | default([], true))) | length > 0
-
 - name: Caskアプリケーション（通常）をインストール
   community.general.homebrew_cask:
     name: "{{ item }}"
     state: present
-  loop: "{{ (brew_casks_normal_all | default([], true)) | difference(installed_casks.stdout_lines | default([], true)) }}"
+  loop: >-
+    {{ brew_casks_normal_all | default([], true)
+       | reject('in', installed_casks.stdout_lines | default([], true)) | list }}
   when: (brew_casks_normal_all | default([], true)) | length > 0
   register: cask_install_result
   failed_when:
@@ -57,5 +52,7 @@
       以下のCaskはrootパスワードが必要なため、手動インストールが必要です：
       brew install --cask {{ brew_casks_sudo_required_missing | join(' ') }}
   vars:
-    brew_casks_sudo_required_missing: "{{ (brew_casks_sudo_required_all | default([], true)) | difference(installed_casks.stdout_lines | default([], true)) }}"
+    brew_casks_sudo_required_missing: >-
+      {{ brew_casks_sudo_required_all | default([], true)
+         | reject('in', installed_casks.stdout_lines | default([], true)) | list }}
   when: brew_casks_sudo_required_missing | length > 0

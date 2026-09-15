@@ -21,10 +21,29 @@
 - name: Caskパッケージのアップグレード処理
   when: (outdated_casks_all.stdout_lines | default([], true)) | length > 0
   block:
+    # brew outdated の出力はトークン名のみ。インストール済みの管理対象Caskだけで
+    # 対応表を作ることで、別tapの同名Caskが入っている場合に誤って引き当てない。
+    - name: インストール済み管理対象Caskのトークン対応表を作成
+      vars:
+        normal_installed: >-
+          {{ brew_casks_normal_all | default([], true)
+             | select('in', installed_casks.stdout_lines | default([], true)) | list }}
+        sudo_required_installed: >-
+          {{ brew_casks_sudo_required_all | default([], true)
+             | select('in', installed_casks.stdout_lines | default([], true)) | list }}
+      ansible.builtin.set_fact:
+        casks_normal_by_token: "{{ dict(normal_installed | map('basename') | zip(normal_installed)) }}"
+        casks_sudo_required_by_token: "{{ dict(sudo_required_installed | map('basename') | zip(sudo_required_installed)) }}"
+
+    # 照合はトークン名で行い、brew へ渡す引数には管理名（tap修飾名）を使う。
     - name: 更新対象のCaskを抽出
       ansible.builtin.set_fact:
-        outdated_casks_normal: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_normal_all | default([], true)) | list }}"
-        outdated_casks_sudo: "{{ outdated_casks_all.stdout_lines | select('in', brew_casks_sudo_required_all | default([], true)) | list }}"
+        outdated_casks_normal: >-
+          {{ outdated_casks_all.stdout_lines | select('in', casks_normal_by_token)
+             | map('extract', casks_normal_by_token) | list }}
+        outdated_casks_sudo: >-
+          {{ outdated_casks_all.stdout_lines | select('in', casks_sudo_required_by_token)
+             | map('extract', casks_sudo_required_by_token) | list }}
 
     - name: 通常のCaskパッケージをアップグレード
       ansible.builtin.command: "{{ brew_bin }} upgrade --cask {{ item }} --greedy"
@@ -55,7 +74,7 @@
       ansible.builtin.debug:
         msg: |
           以下のCaskは対象Appの所有者/権限がずれているため、手動での対応が必要です：
-          sudo chown -R $(whoami) /Applications/{{ item.item.item }}.app
+          sudo chown -R $(whoami) /Applications/{{ item.item.item | basename }}.app
           その後、再度 make upgrade を実行してください。
       loop: "{{ cask_reinstall_results.results | default([]) | selectattr('rc', 'ne', 0) | list }}"
       loop_control:
