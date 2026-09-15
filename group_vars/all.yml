@@ -93,6 +93,7 @@ brew_casks_normal:
   - codex
   - codexbar
   - chatgpt
+  - drawio
   - firefox
   - figma
   - font-fira-code-nerd-font
