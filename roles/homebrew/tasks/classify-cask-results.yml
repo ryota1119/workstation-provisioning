@@ -1,0 +1,52 @@
+---
+# brew install/upgrade --cask の実行結果を失敗理由ごとに振り分ける。
+#
+# 入力: cask_attempt_results
+#   loopでregisterした結果の .results を想定。各要素は item（Cask名）、rc、stdout、stderr を持つ。
+#   when条件でスキップされた要素は rc を持たないため、判定対象から除外する。
+#
+# 出力: casks_sudo_blocked / casks_app_conflict / casks_unknown_failure
+#
+# 判定は「最初の試行の出力」だけで行う。sudoのエラー文言は再インストールの失敗でも出るため、
+# 再インストール後の結果で判定すると、真にsudoが要るCask（pkg形式のzoom等）と
+# 権限がずれているだけのCask（cursor等）を区別できなくなる。
+
+- name: Cask実行結果の分類バケツを初期化
+  ansible.builtin.set_fact:
+    casks_sudo_blocked: []
+    casks_app_conflict: []
+    casks_unknown_failure: []
+
+# 中間変数に真偽値を持たせるとAnsibleが文字列"False"として扱い常に真になるため、
+# 判定式は各キーに直接書く。
+- name: 失敗したCaskを失敗理由で分類
+  vars:
+    output: '{{ (item.stdout | default("")) ~ "\n" ~ (item.stderr | default("")) }}'
+  ansible.builtin.set_fact:
+    casks_sudo_blocked: >-
+      {{ casks_sudo_blocked + (
+           [item.item]
+           if brew_cask_sudo_markers | select('in', output) | list | length > 0
+           else []
+         ) }}
+    # sudoが要るCaskはchownしても直らないため、両方の文言が出た場合はsudoを優先する
+    casks_app_conflict: >-
+      {{ casks_app_conflict + (
+           [item.item]
+           if (brew_cask_app_conflict_marker in output
+               and brew_cask_sudo_markers | select('in', output) | list | length == 0)
+           else []
+         ) }}
+    # どちらにも当てはまらない失敗は握り潰さず、呼び出し側で play を失敗させる
+    casks_unknown_failure: >-
+      {{ casks_unknown_failure + (
+           [item.item]
+           if (brew_cask_app_conflict_marker not in output
+               and brew_cask_sudo_markers | select('in', output) | list | length == 0)
+           else []
+         ) }}
+  loop: >-
+    {{ cask_attempt_results | default([], true)
+       | selectattr('rc', 'defined') | rejectattr('rc', 'eq', 0) | list }}
+  loop_control:
+    label: "{{ item.item }}"

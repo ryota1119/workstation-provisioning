@@ -1,0 +1,62 @@
+---
+# brew install/upgrade --cask の失敗を分類し、自動で直せるものは直したうえで、
+# 手動対応が必要なものを casks_manual_sudo / casks_manual_chown に積み上げる。
+#
+# 入力: cask_attempt_results（実行結果）、brew_cask_action（"インストール" / "アップグレード"）
+# 出力: casks_manual_sudo / casks_manual_chown への追記
+
+- name: Cask実行結果を失敗理由で分類
+  ansible.builtin.include_tasks: classify-cask-results.yml
+
+# sudo要求でも既存App競合でもない失敗は、これまでどおり play を失敗させる。
+# 実行時検出へ移行したことで未知の失敗まで握り潰すことがないようにする。
+- name: 分類できないCaskの失敗で中断
+  ansible.builtin.fail:
+    msg: >-
+      以下のCaskの{{ brew_cask_action }}に失敗しました:
+      {{ casks_unknown_failure | join(', ') }}。
+      sudo要求でも既存App競合でもないため、ログを確認してください。
+  when: casks_unknown_failure | length > 0
+
+- name: sudoで弾かれたCaskを集計
+  ansible.builtin.set_fact:
+    casks_manual_sudo: "{{ casks_manual_sudo + casks_sudo_blocked }}"
+
+# 既存App競合は所有者や権限のずれで起きる。再インストールで直ることがあるため一度試す。
+- name: 既存Appと競合したCaskを退避
+  ansible.builtin.set_fact:
+    casks_conflict_pending: "{{ casks_app_conflict }}"
+
+- name: 既存Appと競合したCaskの再インストールを試行
+  ansible.builtin.command: "{{ brew_bin }} reinstall --cask {{ item }}"
+  loop: "{{ casks_conflict_pending }}"
+  loop_control:
+    label: "{{ item }}"
+  register: cask_reinstall_results
+  changed_when: true
+  failed_when: false
+
+# Cask名とAppバンドル名は一致しない（google-chrome → Google Chrome.app）ため、
+# 案内するパスは推測せず、Caskの app アーティファクトが持つ target を使う。
+- name: 再インストールできなかったCaskのApp情報を取得
+  ansible.builtin.command: "{{ brew_bin }} info --cask {{ item.item }} --json=v2"
+  loop: "{{ cask_reinstall_results.results | default([]) | selectattr('rc', 'ne', 0) | list }}"
+  loop_control:
+    label: "{{ item.item }}"
+  register: cask_app_info
+  changed_when: false
+  failed_when: false
+
+- name: 所有者の修正が必要なCaskを集計
+  vars:
+    app_targets: >-
+      {{ ((item.stdout | from_json).casks[0].artifacts
+          | selectattr('app', 'defined') | map(attribute='target', default='') | select() | list)
+         if (item.rc | default(1)) == 0 and (item.stdout | default('') | length) > 0
+         else [] }}
+  ansible.builtin.set_fact:
+    casks_manual_chown: >-
+      {{ casks_manual_chown + [{'name': item.item.item, 'targets': app_targets}] }}
+  loop: "{{ cask_app_info.results | default([]) | rejectattr('skipped', 'defined') | list }}"
+  loop_control:
+    label: "{{ item.item.item }}"

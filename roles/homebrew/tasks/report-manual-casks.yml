@@ -1,0 +1,25 @@
+---
+# roleの末尾で、手動対応が必要なCaskを1つのメッセージにまとめて出す。
+# 対応方法が違うため、sudoが必要なものと所有者がずれているものは分けて案内する。
+
+- name: 手動対応が必要なCaskの案内
+  ansible.builtin.debug:
+    msg: |
+      {% if casks_manual_sudo | length > 0 %}
+      [sudoが必要] 以下のCaskはrootパスワードが必要です。手動で実行してください：
+        brew {{ brew_cask_action_command | default('upgrade') }} --cask {{ casks_manual_sudo | join(' ') }}
+      {% endif %}
+      {% if casks_manual_chown | length > 0 %}
+      [権限ずれ] 以下のCaskは対象Appの所有者がずれています。修正後に再実行してください：
+      {% for cask in casks_manual_chown %}
+      {% if cask.targets | length > 0 %}
+      {% for target in cask.targets %}
+        sudo chown -R $(whoami) "{{ target }}"
+      {% endfor %}
+      {% else %}
+        {{ cask.name }}: インストール先を確認して権限を修正してください（brew info --cask {{ cask.name }}）
+      {% endif %}
+      {% endfor %}
+      {% endif %}
+  register: manual_cask_report
+  when: (casks_manual_sudo | length > 0) or (casks_manual_chown | length > 0)

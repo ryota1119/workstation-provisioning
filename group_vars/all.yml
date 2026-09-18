@@ -82,8 +82,10 @@ brew_formula:
   - pkgconf
   - re2c
 
-# Caskアプリケーション（通常）
-brew_casks_normal:
+# Caskアプリケーション
+# sudoが必要なものも同じリストに入れる。事前に分類せず、実際に試して弾かれたものを
+# homebrew role が実行時に検出し、roleの最後にまとめて手動実行を案内する。
+brew_casks:
   - 1password-cli
   - alfred
   - alt-tab
@@ -93,6 +95,8 @@ brew_casks_normal:
   - codex
   - codexbar
   - chatgpt
+  - cursor
+  - docker-desktop
   - drawio
   - firefox
   - figma
@@ -102,9 +106,12 @@ brew_casks_normal:
   - gcloud-cli
   - ghostty
   - google-chrome
+  - google-drive
   - google-gemini
   - keka
   - kekaexternalhelper
+  - keyboardcleantool
+  - logi-options+
   - monitorcontrol
   - notion
   - obsidian
@@ -112,17 +119,9 @@ brew_casks_normal:
   - rectangle
   - setapp
   - slack
+  - zoom
   - stablyai/orca/orca
   - xdevplatform/tap/xurl
-
-# Caskアプリケーション（sudo必要）
-brew_casks_sudo_required:
-  - cursor
-  - docker-desktop
-  - google-drive
-  - keyboardcleantool
-  - logi-options+
-  - zoom
 
 # Mac App Storeアプリ
 mas_apps:

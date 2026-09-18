@@ -20,6 +20,7 @@ make chezmoi        # Run the chezmoi script (init + apply)
 make mac-setting    # Run only the mac-setting role
 
 make check          # Ansible syntax check
+make test           # Run tests (shell assertions + cask failure classification playbook)
 make doctor         # Verify required tools are installed
 make install-deps   # Install Ansible collections (requirements.yml)
 
@@ -31,7 +32,7 @@ make mise-prune-apply   # Interactive: delete unused mise versions
 
 The playbook (`site.yml`) runs the roles below in dependency order. Chezmoi is managed separately by `scripts/chezmoi.sh`, invoked through the Makefile after Ansible completes:
 
-1. **homebrew** — Installs Formula and Cask packages. Casks requiring sudo are printed as manual instructions rather than installed automatically.
+1. **homebrew** — Installs Formula and Cask packages. Casks are not pre-classified by whether they need sudo: every cask is attempted, and the ones rejected for a root password are detected at runtime from the command output and printed as manual instructions at the end of the role. Casks blocked by an ownership/permission mismatch on the existing app are reported separately with a `chown` command. A failure matching neither pattern still fails the play.
 2. **mas** — Mac App Store installs via `mas` CLI. Can be disabled per-machine with `enable_mas: false`.
 3. **mise** — Language runtime installs (Node, Python, PHP, Go, etc.). Only runs on `install` tag, never on `upgrade` (to avoid unexpected upgrades).
 4. **mac-setting** — Applies `defaults write` macOS system settings. Only runs on `install` tag, not `upgrade` (triggers Finder/Dock restart).
@@ -46,13 +47,13 @@ The playbook (`site.yml`) runs the roles below in dependency order. Chezmoi is m
 - `group_vars/all.yml` — base package lists shared by all machines
 - `host_vars/{hostname}.yml` — machine-specific overrides/additions (generated from `_template.yml` by `mac-bootstrap.sh`)
 
-Package lists are merged: `brew_taps` + `brew_taps_extra`, `brew_formula` + `brew_formula_extra`, `brew_casks_normal` + `brew_casks_normal_extra`, etc.
+Package lists are merged: `brew_taps` + `brew_taps_extra`, `brew_formula` + `brew_formula_extra`, `brew_casks` + `brew_casks_extra`, etc.
 
 ### Adding packages
 
 - **All machines**: edit `group_vars/all.yml`
 - **One machine only**: edit `host_vars/{hostname}.yml` using the `_extra` suffix variables
-- **Needs sudo to install**: add to `brew_casks_sudo_required` / `brew_casks_sudo_required_extra` — these print a manual install message instead of running automatically
+- **Needs sudo to install**: nothing to do — add it to `brew_casks` / `brew_casks_extra` like any other cask. The role detects the sudo rejection at runtime and prints the manual command at the end. `brew_casks_normal` / `brew_casks_sudo_required` and their `_extra` forms are removed; leaving one defined makes the role fail with an explicit message.
 
 ### Tag design
 

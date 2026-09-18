@@ -15,18 +15,33 @@
         msg: "Homebrewがインストールされていません。`make mac-bootstrap` を実行してください。"
       when: not brew_stat.stat.exists
 
+    # sudoが必要なCaskを事前に手で分類する方式は廃止し、実行時に検出する方式へ一本化した。
+    # 古い変数が残っていると、そこに書かれたCaskがどのリストにも入らず黙って管理対象から
+    # 外れるため、明示的に失敗させる。
+    - name: 廃止したCask変数が残っていないか確認
+      ansible.builtin.assert:
+        that:
+          - brew_casks_sudo_required is not defined
+          - brew_casks_sudo_required_extra is not defined
+          - brew_casks_normal is not defined
+          - brew_casks_normal_extra is not defined
+        fail_msg: >-
+          廃止した変数が残っています。brew_casks_normal / brew_casks_normal_extra は
+          brew_casks / brew_casks_extra へ改名し、brew_casks_sudo_required /
+          brew_casks_sudo_required_extra は同じリストへ統合してください。
+          sudoが必要なCaskは実行時に検出して最後にまとめて案内します。
+
     - name: Homebrew管理対象リストを集約
       ansible.builtin.set_fact:
         brew_taps_all: "{{ ((brew_taps | default([], true)) + (brew_taps_extra | default([], true))) | unique }}"
         brew_formula_all: "{{ ((brew_formula | default([], true)) + (brew_formula_extra | default([], true))) | unique }}"
-        brew_casks_normal_all: "{{ ((brew_casks_normal | default([], true)) + (brew_casks_normal_extra | default([], true))) | unique }}"
-        brew_casks_sudo_required_all: "{{ ((brew_casks_sudo_required | default([], true)) + (brew_casks_sudo_required_extra | default([], true))) | unique }}"
+        brew_casks_all: "{{ ((brew_casks | default([], true)) + (brew_casks_extra | default([], true))) | unique }}"
 
     # brew outdated は tap 修飾名ではなく末尾のトークン名しか出力しないため、
     # 同じトークンを持つCaskが複数あると更新対象を一意に特定できない。
     - name: Cask名のトークン重複を検出
       vars:
-        brew_cask_tokens: "{{ (brew_casks_normal_all + brew_casks_sudo_required_all) | map('basename') | list }}"
+        brew_cask_tokens: "{{ brew_casks_all | map('basename') | list }}"
       ansible.builtin.assert:
         that:
           - brew_cask_tokens | unique | length == brew_cask_tokens | length
@@ -48,6 +63,13 @@
       changed_when: false
       failed_when: false
 
+    # install.yml と upgrade.yml のどちらを通っても、最後の案内タスクが参照できるように
+    # ここで初期化しておく。
+    - name: 手動対応が必要なCaskの集計を初期化
+      ansible.builtin.set_fact:
+        casks_manual_sudo: []
+        casks_manual_chown: []
+
 - name: Homebrewパッケージインストール処理
   ansible.builtin.import_tasks: install.yml
   tags:
@@ -58,3 +80,10 @@
   ansible.builtin.import_tasks: upgrade.yml
   tags:
     - upgrade
+
+- name: 手動対応が必要なCaskの案内
+  ansible.builtin.import_tasks: report-manual-casks.yml
+  tags:
+    - install
+    - upgrade
+    - homebrew

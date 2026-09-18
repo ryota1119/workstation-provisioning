@@ -31,28 +31,27 @@
   loop_control:
     label: "{{ item }}"
 
-- name: Caskアプリケーション（通常）をインストール
-  community.general.homebrew_cask:
-    name: "{{ item }}"
-    state: present
+- name: 案内メッセージ用のbrewサブコマンドを設定
+  ansible.builtin.set_fact:
+    brew_cask_action_command: install
+
+# sudoが必要かどうかは事前に分類せず、実際に試して弾かれたものを後で拾う。
+# 失敗理由を文字列で判定するため、community.general.homebrew_cask モジュールではなく
+# コマンドを直接実行してstdout/stderrをそのまま受け取る。
+# 冪等性はインストール済みCaskを手前で除外することで担保している。
+- name: Caskアプリケーションをインストール
+  ansible.builtin.command: "{{ brew_bin }} install --cask {{ item }}"
   loop: >-
-    {{ brew_casks_normal_all | default([], true)
+    {{ brew_casks_all | default([], true)
        | reject('in', installed_casks.stdout_lines | default([], true)) | list }}
-  when: (brew_casks_normal_all | default([], true)) | length > 0
-  register: cask_install_result
-  failed_when:
-    - cask_install_result is failed
-    - "'already an App at' not in (cask_install_result.msg | default(''))"
   loop_control:
     label: "{{ item }}"
+  register: cask_install_results
+  changed_when: cask_install_results.rc == 0
+  failed_when: false
 
-- name: Caskアプリケーション（sudo必要）の手動インストール案内
-  ansible.builtin.debug:
-    msg: |
-      以下のCaskはrootパスワードが必要なため、手動インストールが必要です：
-      brew install --cask {{ brew_casks_sudo_required_missing | join(' ') }}
+- name: Caskインストールの失敗を処理
+  ansible.builtin.include_tasks: resolve-cask-failures.yml
   vars:
-    brew_casks_sudo_required_missing: >-
-      {{ brew_casks_sudo_required_all | default([], true)
-         | reject('in', installed_casks.stdout_lines | default([], true)) | list }}
-  when: brew_casks_sudo_required_missing | length > 0
+    cask_attempt_results: "{{ cask_install_results.results | default([]) }}"
+    brew_cask_action: インストール

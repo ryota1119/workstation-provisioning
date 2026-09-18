@@ -13,7 +13,5 @@ brew_taps_extra: []
 brew_formula_extra: []
 
 # このマシンにだけ追加するCaskアプリ
-brew_casks_normal_extra: []
-
-# このマシンにだけ追加するCaskアプリ（sudo必要）
-brew_casks_sudo_required_extra: []
+# sudoが必要なものも同じリストに入れる。実行時に検出して最後に手動実行を案内する。
+brew_casks_extra: []

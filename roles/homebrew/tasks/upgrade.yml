@@ -12,6 +12,10 @@
     label: "{{ item }}"
   changed_when: true
 
+- name: 案内メッセージ用のbrewサブコマンドを設定
+  ansible.builtin.set_fact:
+    brew_cask_action_command: upgrade
+
 - name: 更新可能なCaskパッケージを取得
   ansible.builtin.command: "{{ brew_bin }} outdated --cask --greedy --quiet"
   register: outdated_casks_all
@@ -25,94 +29,34 @@
     # 対応表を作ることで、別tapの同名Caskが入っている場合に誤って引き当てない。
     - name: インストール済み管理対象Caskのトークン対応表を作成
       vars:
-        normal_installed: >-
-          {{ brew_casks_normal_all | default([], true)
-             | select('in', installed_casks.stdout_lines | default([], true)) | list }}
-        sudo_required_installed: >-
-          {{ brew_casks_sudo_required_all | default([], true)
+        managed_installed: >-
+          {{ brew_casks_all | default([], true)
              | select('in', installed_casks.stdout_lines | default([], true)) | list }}
       ansible.builtin.set_fact:
-        casks_normal_by_token: "{{ dict(normal_installed | map('basename') | zip(normal_installed)) }}"
-        casks_sudo_required_by_token: "{{ dict(sudo_required_installed | map('basename') | zip(sudo_required_installed)) }}"
+        casks_by_token: "{{ dict(managed_installed | map('basename') | zip(managed_installed)) }}"
 
     # 照合はトークン名で行い、brew へ渡す引数には管理名（tap修飾名）を使う。
     - name: 更新対象のCaskを抽出
       ansible.builtin.set_fact:
-        outdated_casks_normal: >-
-          {{ outdated_casks_all.stdout_lines | select('in', casks_normal_by_token)
-             | map('extract', casks_normal_by_token) | list }}
-        outdated_casks_sudo: >-
-          {{ outdated_casks_all.stdout_lines | select('in', casks_sudo_required_by_token)
-             | map('extract', casks_sudo_required_by_token) | list }}
+        outdated_casks_managed: >-
+          {{ outdated_casks_all.stdout_lines | select('in', casks_by_token)
+             | map('extract', casks_by_token) | list }}
 
-    - name: 通常のCaskパッケージをアップグレード
+    # sudoが必要かどうかは事前に分類せず、全て試して弾かれたものを後で拾う。
+    - name: Caskパッケージをアップグレード
       ansible.builtin.command: "{{ brew_bin }} upgrade --cask {{ item }} --greedy"
-      loop: "{{ outdated_casks_normal }}"
+      loop: "{{ outdated_casks_managed }}"
       loop_control:
         label: "{{ item }}"
-      when: outdated_casks_normal | length > 0
-      changed_when: true
       register: cask_upgrade_results
-      failed_when:
-        - cask_upgrade_results.rc != 0
-        - "'It seems there is already an App at' not in (cask_upgrade_results.stderr | default(''))"
-        - "'It seems there is already an App at' not in (cask_upgrade_results.stdout | default(''))"
-
-    - name: アップグレード失敗したCaskを強制再インストール（古いバージョンが残存している場合の対応）
-      ansible.builtin.command: "{{ brew_bin }} reinstall --cask {{ item.item }}"
-      loop: "{{ cask_upgrade_results.results | default([]) | selectattr('rc', 'ne', 0) | list }}"
-      loop_control:
-        label: "{{ item.item }}"
-      when: cask_upgrade_results.results is defined
-      changed_when: true
-      register: cask_reinstall_results
-      failed_when:
-        - cask_reinstall_results.rc != 0
-        - "'sudo: a password is required' not in (cask_reinstall_results.stderr | default(''))"
-
-    # Cask名とAppバンドル名は一致しない（google-chrome → Google Chrome.app）ため、
-    # 案内するパスは推測せず、Caskの app アーティファクトが持つ target を使う。
-    - name: 権限エラーで再インストールできなかったCaskのApp情報を取得
-      ansible.builtin.command: "{{ brew_bin }} info --cask {{ item.item.item }} --json=v2"
-      loop: "{{ cask_reinstall_results.results | default([]) | selectattr('rc', 'ne', 0) | list }}"
-      loop_control:
-        label: "{{ item.item.item }}"
-      when: cask_reinstall_results.results is defined
-      register: cask_app_info
-      changed_when: false
+      changed_when: cask_upgrade_results.rc == 0
       failed_when: false
 
-    - name: 権限エラーで再インストールできなかったCaskの案内
+    - name: Caskアップグレードの失敗を処理
+      ansible.builtin.include_tasks: resolve-cask-failures.yml
       vars:
-        cask_name: "{{ item.item.item.item }}"
-        app_targets: >-
-          {{ ((item.stdout | from_json).casks[0].artifacts
-              | selectattr('app', 'defined') | map(attribute='target', default='') | select() | list)
-             if (item.rc | default(1)) == 0 and (item.stdout | default('') | length) > 0
-             else [] }}
-      ansible.builtin.debug:
-        msg: |
-          {% if app_targets %}
-          Cask {{ cask_name }} は対象Appの所有者/権限がずれているため、手動での対応が必要です：
-          {% for target in app_targets %}
-          sudo chown -R $(whoami) "{{ target }}"
-          {% endfor %}
-          その後、再度 make upgrade を実行してください。
-          {% else %}
-          Cask {{ cask_name }} の再インストールに失敗しました。インストール先を確認して権限を修正してください：
-          brew info --cask {{ cask_name }}
-          {% endif %}
-      loop: "{{ cask_app_info.results | default([]) | rejectattr('skipped', 'defined') | list }}"
-      loop_control:
-        label: "{{ item.item.item.item }}"
-      when: cask_app_info.results is defined
-
-    - name: Cask（sudo必要）の手動アップグレード案内
-      ansible.builtin.debug:
-        msg: |
-          以下のCaskはrootパスワードが必要なため、手動アップグレードが必要です：
-          brew upgrade --cask {{ outdated_casks_sudo | join(' ') }}
-      when: outdated_casks_sudo | length > 0
+        cask_attempt_results: "{{ cask_upgrade_results.results | default([]) }}"
+        brew_cask_action: アップグレード
 
 - name: 古いバージョンのファイルを削除
   ansible.builtin.command: "{{ brew_bin }} cleanup"

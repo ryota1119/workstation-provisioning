@@ -32,6 +32,7 @@ help:
 	@echo "  install-deps        - Ansibleコレクションのインストール"
 	@echo "  doctor              - 必須ツールの事前チェック"
 	@echo "  check               - Ansible構文チェック"
+	@echo "  test                - テストの実行"
 	@echo "  clean               - 一時ファイルのクリーンアップ"
 
 # ============================================================
@@ -149,6 +150,13 @@ doctor:
 check:
 	@echo "Checking Ansible syntax..."
 	@$(ANSIBLE_PLAYBOOK) site.yml --syntax-check
+
+.PHONY: test
+test:
+	@echo "Running tests..."
+	@bash ./tests/test-workspace-repositories.sh
+	@$(ANSIBLE_PLAYBOOK) -i localhost, tests/test-homebrew-cask-classification.yml
+	@$(ANSIBLE_PLAYBOOK) -i localhost, tests/test-homebrew-cask-failure-flow.yml
 
 .PHONY: clean
 clean:

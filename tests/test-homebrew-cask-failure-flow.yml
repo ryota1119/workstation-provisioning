@@ -1,0 +1,131 @@
+---
+# 失敗パスのend-to-endテスト。
+#
+# 実機では、sudoが必要なCaskがoutdatedになるまで失敗パスが発火しない。
+# （pkg形式のCaskは自己アップデートするものが多く、brew outdated に出ない期間が長い）
+# そのためbrewをスタブに差し替えて、sudoで弾かれた場合と既存Appと競合した場合の
+# 両方を再現し、resolve-cask-failures.yml から report-manual-casks.yml までを通す。
+- name: Cask失敗フローのテスト
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - "{{ playbook_dir }}/../roles/homebrew/vars/main.yml"
+
+  tasks:
+    - name: スタブ用の一時ディレクトリを作成
+      ansible.builtin.tempfile:
+        state: directory
+        suffix: brew-stub
+      register: stub_dir
+
+    - name: brewのスタブを配置
+      ansible.builtin.copy:
+        dest: "{{ stub_dir.path }}/brew"
+        mode: "0755"
+        content: |
+          #!/bin/sh
+          # 再インストールは常にsudoで失敗する（所有者がrootにずれているCaskの再現）
+          # info は実機の brew info --cask --json=v2 と同じ構造を返す
+          case "$1" in
+            reinstall)
+              echo "Error: Failure while executing; \`/usr/bin/sudo -E -- /bin/cp\` exited with 1." >&2
+              echo "sudo: a password is required" >&2
+              exit 1
+              ;;
+            info)
+              printf '%s\n' '{"casks":[{"artifacts":[{"app":["Cursor.app"],"target":"/Applications/Cursor.app"},{"zap":[{"trash":["~/.cursor"]}]}]}]}'
+              exit 0
+              ;;
+          esac
+          echo "スタブが想定しない呼び出し: $*" >&2
+          exit 2
+
+    - name: roleと同じ初期状態を用意
+      ansible.builtin.set_fact:
+        brew_bin: "{{ stub_dir.path }}/brew"
+        casks_manual_sudo: []
+        casks_manual_chown: []
+
+    - name: sudoで弾かれたCaskと既存Appと競合したCaskの失敗を処理
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/homebrew/tasks/resolve-cask-failures.yml"
+      vars:
+        brew_cask_action: アップグレード
+        cask_attempt_results:
+          - item: zoom
+            rc: 1
+            stdout: ""
+            stderr: |
+              Error: Failure while executing; `/usr/bin/sudo -E -- /usr/sbin/installer` exited with 1.
+              sudo: a password is required
+          - item: cursor
+            rc: 1
+            stdout: "Error: It seems there is already an App at '/Applications/Cursor.app'."
+            stderr: ""
+
+    - name: sudoで弾かれたCaskが集計されること
+      ansible.builtin.assert:
+        that:
+          - casks_manual_sudo == ["zoom"]
+        fail_msg: "casks_manual_sudo が想定と異なる: {{ casks_manual_sudo }}"
+        success_msg: "sudo集計 OK"
+
+    # Cask名とAppバンドル名は一致しないため、案内するパスは brew info の target から取る
+    - name: 再インストールできなかったCaskのAppパスが集計されること
+      ansible.builtin.assert:
+        that:
+          - casks_manual_chown | length == 1
+          - casks_manual_chown[0].name == "cursor"
+          - casks_manual_chown[0].targets == ["/Applications/Cursor.app"]
+        fail_msg: "casks_manual_chown が想定と異なる: {{ casks_manual_chown }}"
+        success_msg: "権限ずれ集計 OK"
+
+    - name: 案内メッセージを生成
+      ansible.builtin.set_fact:
+        brew_cask_action_command: upgrade
+
+    - name: 手動対応が必要なCaskの案内を生成
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/homebrew/tasks/report-manual-casks.yml"
+
+    - name: 案内メッセージに実行可能なコマンドが含まれること
+      ansible.builtin.assert:
+        that:
+          - "'brew upgrade --cask zoom' in manual_cask_report.msg"
+          - "'sudo chown -R $(whoami) \"/Applications/Cursor.app\"' in manual_cask_report.msg"
+          - "'[sudoが必要]' in manual_cask_report.msg"
+          - "'[権限ずれ]' in manual_cask_report.msg"
+        fail_msg: "案内メッセージが想定と異なる:\n{{ manual_cask_report.msg }}"
+        success_msg: "案内メッセージ OK"
+
+    - name: 生成された案内メッセージ
+      ansible.builtin.debug:
+        var: manual_cask_report.msg
+
+    - name: 分類できない失敗ではplayが失敗すること
+      block:
+        - name: 未知の失敗を処理
+          ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/homebrew/tasks/resolve-cask-failures.yml"
+          vars:
+            brew_cask_action: アップグレード
+            cask_attempt_results:
+              - item: postman
+                rc: 1
+                stdout: ""
+                stderr: "Error: Download failed on Cask 'postman'"
+
+        - name: ここに到達してはいけない
+          ansible.builtin.fail:
+            msg: "未知の失敗が握り潰された"
+      rescue:
+        - name: 未知の失敗で中断されたこと
+          ansible.builtin.assert:
+            that:
+              - "'postman' in ansible_failed_result.msg"
+            fail_msg: "想定と違う理由で失敗した: {{ ansible_failed_result.msg }}"
+            success_msg: "未知の失敗で中断 OK"
+
+    - name: スタブを削除
+      ansible.builtin.file:
+        path: "{{ stub_dir.path }}"
+        state: absent

@@ -1,0 +1,17 @@
+---
+# Cask操作の失敗理由を判定するための文字列。ユーザーが設定する値ではないため
+# group_vars ではなく role 内の定数として持つ。
+
+# brewがsudoを要求して弾かれたときの文言。
+# AnsibleはTTYを与えないため、sudoはパスワード入力待ちにならず即座に失敗する。
+# 実機（macOS 25.6 / sudo）では以下の2行が両方出るが、sudoの版や設定によっては
+# 片方しか出ないことがあるため、どちらか一方でも一致すればsudo必要とみなす。
+#   sudo: a terminal is required to read the password; either use the -S option ...
+#   sudo: a password is required
+brew_cask_sudo_markers:
+  - "a password is required"
+  - "a terminal is required to read the password"
+
+# インストール先に既に同名のAppが存在して上書きできないときの文言。
+# 所有者や権限のずれで起きるため、sudoではなくchownで直る。
+brew_cask_app_conflict_marker: "It seems there is already an App at"

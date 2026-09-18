@@ -1,0 +1,105 @@
+---
+# Cask実行結果の分類ロジック（roles/homebrew/tasks/classify-cask-results.yml）の単体テスト。
+#
+# brewは一切実行せず、偽の実行結果を流し込んでバケツ分けだけを検証する。
+# stderrの文字列は実機で採取した実物を使う:
+#   sudo: a terminal is required to read the password; either use the -S option ...
+#   sudo: a password is required
+- name: Cask失敗分類のテスト
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars_files:
+    - "{{ playbook_dir }}/../roles/homebrew/vars/main.yml"
+
+  tasks:
+    - name: 偽のCask実行結果を用意
+      ansible.builtin.set_fact:
+        cask_attempt_results:
+          # 成功したものはどのバケツにも入らない
+          - item: google-chrome
+            rc: 0
+            stdout: "==> Upgrading google-chrome"
+            stderr: ""
+          # pkg形式のCask。uninstallスタンザのsudoで弾かれる
+          - item: zoom
+            rc: 1
+            stdout: ""
+            stderr: |
+              Error: Failure while executing; `/usr/bin/sudo -E -- /usr/sbin/installer` exited with 1.
+              sudo: a password is required
+          # TTYなしのsudoが最初に出すのはこちらの文言
+          - item: google-drive
+            rc: 1
+            stdout: ""
+            stderr: |
+              sudo: a terminal is required to read the password; either use the -S option to read from standard input or configure an askpass helper
+              sudo: a password is required
+          # 所有者/権限ずれ。sudoではなくchownで直る
+          - item: cursor
+            rc: 1
+            stdout: "Error: It seems there is already an App at '/Applications/Cursor.app'."
+            stderr: ""
+          # sudoでも権限ずれでもない本物の失敗
+          - item: postman
+            rc: 1
+            stdout: ""
+            stderr: "Error: Download failed on Cask 'postman'"
+          # when条件でスキップされた要素にはrcが無い。無視されること
+          - item: slack
+            skipped: true
+          # 両方の文言が出た場合はsudoを優先する（chownしても直らないため）
+          - item: docker-desktop
+            rc: 1
+            stdout: "It seems there is already an App at '/Applications/Docker.app'."
+            stderr: "sudo: a password is required"
+
+    - name: 分類を実行
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/homebrew/tasks/classify-cask-results.yml"
+
+    - name: sudoで弾かれたCaskが正しく集まること
+      ansible.builtin.assert:
+        that:
+          - casks_sudo_blocked == ["zoom", "google-drive", "docker-desktop"]
+        fail_msg: "casks_sudo_blocked が想定と異なる: {{ casks_sudo_blocked }}"
+        success_msg: "sudoバケツ OK"
+
+    - name: 権限ずれのCaskが正しく集まること
+      ansible.builtin.assert:
+        that:
+          - casks_app_conflict == ["cursor"]
+        fail_msg: "casks_app_conflict が想定と異なる: {{ casks_app_conflict }}"
+        success_msg: "権限ずれバケツ OK"
+
+    - name: 分類できない失敗が握り潰されないこと
+      ansible.builtin.assert:
+        that:
+          - casks_unknown_failure == ["postman"]
+        fail_msg: "casks_unknown_failure が想定と異なる: {{ casks_unknown_failure }}"
+        success_msg: "未分類バケツ OK"
+
+    - name: 成功したCaskとスキップされた要素がどのバケツにも入らないこと
+      ansible.builtin.assert:
+        that:
+          - "'google-chrome' not in (casks_sudo_blocked + casks_app_conflict + casks_unknown_failure)"
+          - "'slack' not in (casks_sudo_blocked + casks_app_conflict + casks_unknown_failure)"
+        fail_msg: "成功またはスキップされたCaskがバケツに混入している"
+        success_msg: "成功・スキップの除外 OK"
+
+    # 空リストを渡してもエラーにならないこと（更新対象が無い通常のmake upgrade）
+    - name: 実行結果が空の場合
+      ansible.builtin.set_fact:
+        cask_attempt_results: []
+
+    - name: 空の実行結果で分類を実行
+      ansible.builtin.include_tasks: "{{ playbook_dir }}/../roles/homebrew/tasks/classify-cask-results.yml"
+
+    - name: 空の実行結果では全バケツが空になること
+      ansible.builtin.assert:
+        that:
+          - casks_sudo_blocked == []
+          - casks_app_conflict == []
+          - casks_unknown_failure == []
+        fail_msg: "空入力でバケツが空にならない"
+        success_msg: "空入力 OK"

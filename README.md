@@ -7,7 +7,7 @@ macOS環境のセットアップと管理を自動化するAnsibleプロジェ�
 - **2コマンド運用**: 初回は `make provision`、日常は `make upgrade` の2つで完結
 - **マシン固有設定**: `host_vars/{ホスト名}.yml` で機種ごとに追加パッケージを管理
 - **冪等性**: 何度実行しても同じ結果になる（既にインストール済みは自動スキップ）
-- **sudo必要なCaskの分離**: 対話的な操作が必要なアプリは手動インストール案内のみ表示
+- **sudo必要なCaskの自動検出**: rootパスワードが必要で弾かれたCaskを実行時に検出し、最後にまとめて手動実行を案内
 - **dotfiles管理**: chezmoiで複数マシン間のdotfilesを同期
 - **1Password連携**: SSH認証エージェント・シークレット管理に1Passwordを使用
 - **mise統合**: 言語ランタイムのバージョン管理
@@ -233,16 +233,12 @@ brew_formula:
   - mise
   ...
 
-# Cask（通常 - 自動アップグレード対象）
-brew_casks_normal:
+# Cask（sudoが必要なものも同じリストに入れる）
+brew_casks:
   - 1password
   - cursor
-  - google-chrome
-  ...
-
-# Cask（sudo必要 - 手動インストール案内）
-brew_casks_sudo_required:
   - docker-desktop
+  - google-chrome
   - zoom
   ...
 
@@ -281,14 +277,11 @@ enable_mas: false
 brew_formula_extra:
   - some-cli-tool
 
-# このマシンにだけ追加するCask
-brew_casks_normal_extra:
+# このマシンにだけ追加するCask（sudoが必要なものも同じリストに入れる）
+brew_casks_extra:
   - chatwork
-  - readdle-spark
-
-# このマシンにだけ追加するCask（sudo必要）
-brew_casks_sudo_required_extra:
   - nordvpn
+  - readdle-spark
 ```
 
 `group_vars/all.yml` の `brew_formula` などの共通リストと、`host_vars/{ホスト名}.yml` の `brew_formula_extra` などのマシン固有リストは**結合された上で**インストールされます。
@@ -323,24 +316,33 @@ make upgrade
 実行内容：
 
 - ✅ Homebrew Formulaのアップグレード
-- ✅ 通常Caskアプリのアップグレード
+- ✅ Caskアプリのアップグレード
 - ✅ Mac App Storeアプリのアップグレード
-- 📋 sudo必要Caskは通知のみ（手動実行が必要）
+- 📋 sudoで弾かれたCaskはroleの最後に通知のみ（手動実行が必要）
 - ⏭️ mise / mac-setting / chezmoi はスキップ（dotfilesを更新したい場合は`make chezmoi-upgrade`を個別に実行）
 
-### sudo必要なCaskを手動アップグレード
+### sudoで弾かれたCaskを手動アップグレード
 
-`make upgrade` 後にコンソールに表示されるコマンドを実行：
+Caskがsudoを要求するかどうかは事前に定義しません。`make upgrade` は全てのCaskを
+アップグレードしようとし、rootパスワードが必要で弾かれたものをroleの最後にまとめて表示します。
+表示されたコマンドをそのまま実行してください：
 
 ```bash
 brew upgrade --cask docker-desktop zoom
 ```
 
+所有者や権限がずれているCaskは別枠で表示されます。こちらは所有者を直してから
+`make upgrade` を再実行してください：
+
+```bash
+sudo chown -R $(whoami) "/Applications/Cursor.app"
+```
+
 ### マシンに新しいアプリを追加
 
 ```bash
-# host_vars/{ホスト名}.yml に追加
-brew_casks_normal_extra:
+# host_vars/{ホスト名}.yml に追加（sudoが必要かどうかは気にしなくてよい）
+brew_casks_extra:
   - new-app
 
 # 反映
