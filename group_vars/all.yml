@@ -15,9 +15,12 @@ brew_formula:
   # 開発ツール
   - awscli
   - chezmoi
+  - cloud-sql-proxy
   - git
   - gh
   - ghq
+  - graphviz
+  - hermes-agent
   - httpie
   - llama.cpp
   - lazygit
@@ -44,6 +47,7 @@ brew_formula:
   - ffmpeg
   - fzf
   - jq
+  - poppler
   - ripgrep
   - telnet
   - terminal-notifier
@@ -108,6 +112,7 @@ brew_casks:
   - google-chrome
   - google-drive
   - google-gemini
+  - hermes-desktop
   - keka
   - kekaexternalhelper
   - keyboardcleantool
